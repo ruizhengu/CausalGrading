@@ -2,30 +2,29 @@ package org.example;
 
 import com.github.javaparser.utils.CodeGenerationUtils;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Util {
-    public static Path gradleModuleRoot(Class<?> c) {
-        String buildFileName = "build.gradle";
+    public static Set<File> files = new HashSet<>();
 
-
-        Path other = Paths.get(".");
-        Path normalize = CodeGenerationUtils
-                .classLoaderRoot(c)
-                .resolve(other)
-                .normalize();
-
-        // If it's not a directory, or if it is a directory and the build file isn't present, go up a level.
-        while (!normalize.toFile().isDirectory() || !normalize.resolve(buildFileName).toFile().exists()) {
-            System.out.println("source root not found at + " + normalize + ", trying next directory up");
-            other = other.resolve("..");
-            normalize = CodeGenerationUtils
-                    .classLoaderRoot(c)
-                    .resolve(other)
-                    .normalize();
+    /**
+     * Get all the files except the test files in the project.
+     *
+     * @param dir The path of main/java directory
+     * @return All the files in the directory
+     */
+    public static Set<File> listFiles(File dir) {
+        for (File entry : dir.listFiles()) {
+            if (entry.isDirectory()) {
+                listFiles(entry);
+            } else {
+                files.add(entry);
+            }
         }
-
-        return normalize;
+        return files;
     }
 }
