@@ -1,0 +1,9 @@
+digraph Cafe {
+IDmain [label="main"];
+IDaddRecipe [label="addRecipe"];
+IDprintMenu [label="printMenu"];
+IDaddIngredient [label="addIngredient"];
+IDmain -> IDaddRecipe [label="uk.ac.sheffield.com1003.cafe.Cafe.addRecipe"];
+IDmain -> IDprintMenu [label="uk.ac.sheffield.com1003.cafe.Cafe.printMenu"];
+IDmain -> IDaddIngredient [label="uk.ac.sheffield.com1003.cafe.Recipe.addIngredient"];
+}

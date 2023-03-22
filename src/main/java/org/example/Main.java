@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class Main {
 
     public static String DIR_PATH = "/home/ruizhen/Projects/Experiment/com1003_cafe/src/main/java";
-
+    public static String ENTRY_NODE = "main";
     public static JSONObject jsonObject = new JSONObject();
 
     public static CompilationUnit cu;
@@ -48,6 +48,16 @@ public class Main {
 
         Set<String> callers = getCallers(entry);
         System.out.println(callers);
+
+        // Generate the graph of method calls in the entry file
+        Digraph graph = new Digraph("Cafe");
+        graph.addNode(ENTRY_NODE);
+        for (String caller : callers) {
+            String methodName = caller.split("\\.")[caller.split("\\.").length - 1];
+            graph.addNode(methodName);
+            graph.link(ENTRY_NODE, methodName).setLabel(caller);
+        }
+        graph.generate("Cafe.dot");
     }
 
     /**
