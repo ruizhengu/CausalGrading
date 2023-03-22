@@ -1,9 +1,17 @@
 digraph Cafe {
 IDmain [label="main"];
-IDaddRecipe [label="addRecipe"];
-IDprintMenu [label="printMenu"];
 IDaddIngredient [label="addIngredient"];
-IDmain -> IDaddRecipe [label="uk.ac.sheffield.com1003.cafe.Cafe.addRecipe"];
-IDmain -> IDprintMenu [label="uk.ac.sheffield.com1003.cafe.Cafe.printMenu"];
-IDmain -> IDaddIngredient [label="uk.ac.sheffield.com1003.cafe.Recipe.addIngredient"];
+IDCoffee [label="Coffee"];
+IDWater [label="Water"];
+IDaddRecipe [label="addRecipe"];
+IDRecipe [label="Recipe"];
+IDMilk [label="Milk"];
+IDprintMenu [label="printMenu"];
+IDmain -> IDaddIngredient;
+IDmain -> IDaddRecipe;
+IDmain -> IDprintMenu;
+IDaddIngredient -> IDCoffee;
+IDaddIngredient -> IDWater;
+IDaddIngredient -> IDMilk;
+IDaddRecipe -> IDRecipe;
 }

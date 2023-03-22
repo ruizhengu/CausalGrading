@@ -4,13 +4,16 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import javassist.compiler.ast.Pair;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -25,7 +28,7 @@ public class Main {
     public static String DIR_PATH = "/home/ruizhen/Projects/Experiment/com1003_cafe/src/main/java";
     public static String ENTRY_NODE = "main";
     public static JSONObject jsonObject = new JSONObject();
-
+    public static Digraph graph = new Digraph("Cafe");
     public static CompilationUnit cu;
 
     public static void main(String[] args) throws FileNotFoundException {
@@ -36,27 +39,13 @@ public class Main {
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver);
 
-//        cu = StaticJavaParser.parse(new File(FILE_PATH));
-//        cu.accept(new ClassVisitor(), null);
-//        cu.accept(new MethodVisitor(), null);
-
-//        jsonObject.put(startingNode, callee);
-//        System.out.println(jsonObject);
+        graph.addNode(ENTRY_NODE);
 
         File entry = getEntry();
         System.out.println("Entry Class: " + entry);
 
         Set<String> callers = getCallers(entry);
         System.out.println(callers);
-
-        // Generate the graph of method calls in the entry file
-        Digraph graph = new Digraph("Cafe");
-        graph.addNode(ENTRY_NODE);
-        for (String caller : callers) {
-            String methodName = caller.split("\\.")[caller.split("\\.").length - 1];
-            graph.addNode(methodName);
-            graph.link(ENTRY_NODE, methodName).setLabel(caller);
-        }
         graph.generate("Cafe.dot");
     }
 
@@ -97,28 +86,22 @@ public class Main {
         @Override
         public void visit(MethodCallExpr n, Void arg) {
             super.visit(n, arg);
-//            System.out.println("===========");
-//            System.out.println("Statement: " + n);
-//            System.out.println("Method Call: " + n.getName());
-//            System.out.println("Caller instance: " + n.getScope().get());
-//            System.out.println("Class of instance: " + n.getScope().get().calculateResolvedType().describe());
-
-//            System.out.println(n.getParentNode());
-//            System.out.println(n.getName());
-//            if (!Objects.equals(n.getScope().toString(), "Optional.empty")) {
-//                caller.add(n.getScope().get().calculateResolvedType().describe() + "." + n.getName());
-//            }
-
-            caller.add(n.getScope().get().calculateResolvedType().describe() + "." + n.getName());
-
-            // Get arguments class name
-            // For Data Dependency Graph - save this for later
-//            if (n.getArguments().size() > 0) {
-//                for (int i = 0; i < n.getArguments().size(); i++) {
-//                    System.out.println("Argument " + i + ": " + n.getArguments().get(i));
-//                    System.out.println("Argument " + i + " class: " + n.getArguments().get(i).calculateResolvedType().describe());
-//                }
-//            }
+            // Add method calls in the graph
+            String methodNode = String.valueOf(n.getName());
+            if (!graph.exists(methodNode)) {
+                graph.addNode(methodNode);
+                graph.link(ENTRY_NODE, methodNode);
+            }
+            // Add arguments as data dependency in the graph
+            if (n.getArguments().size() > 0) {
+                for (Expression argument : n.getArguments()) {
+                    String argumentNode = Util.getSimpleClassName(argument.calculateResolvedType().describe());
+                    if (!graph.exists(argumentNode)) {
+                        graph.addNode(argumentNode);
+                        graph.link(methodNode, argumentNode);
+                    }
+                }
+            }
         }
     }
 
