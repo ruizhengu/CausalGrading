@@ -42,11 +42,13 @@ public class Main {
         graph.addNode(ENTRY_NODE);
 
         File entry = getEntry();
-        System.out.println("Entry Class: " + entry);
+//        System.out.println("Entry Class: " + entry);
 
-        Set<String> callers = getCallers(entry);
-        System.out.println(callers);
-        graph.generate("Cafe.dot");
+        Set<String> callers = getEntryCallers(entry);
+        for (String call : callers) {
+            getCalleeFromCaller(call);
+        }
+//        graph.generate("Cafe.dot");
     }
 
     /**
@@ -68,14 +70,21 @@ public class Main {
         return null;
     }
 
-    public static Set<String> getCallers(File entry) throws FileNotFoundException {
+    public static Set<String> getEntryCallers(File entry) throws FileNotFoundException {
         cu = StaticJavaParser.parse(entry);
-        MethodVisitor methodVisitor = new MethodVisitor();
-        cu.accept(methodVisitor, null);
-        return methodVisitor.getCaller();
+        EntryMethodVisitor visitor = new EntryMethodVisitor();
+        cu.accept(visitor, null);
+        return visitor.getCaller();
     }
 
-    private static class MethodVisitor extends VoidVisitorAdapter<Void> {
+    public static void getCalleeFromCaller(String method) throws FileNotFoundException {
+        cu = StaticJavaParser.parse(Util.getFileOfMethod(method));
+        MethodCallVisitor visitor = new MethodCallVisitor();
+        visitor.setMethod(method);
+        cu.accept(visitor, null);
+    }
+
+    private static class EntryMethodVisitor extends VoidVisitorAdapter<Void> {
 
         private static Set<String> caller = new HashSet<>();
 
@@ -86,6 +95,8 @@ public class Main {
         @Override
         public void visit(MethodCallExpr n, Void arg) {
             super.visit(n, arg);
+
+            caller.add(Util.getFullyQualifiedClassName(n));
             // Add method calls in the graph
             String methodNode = String.valueOf(n.getName());
             if (!graph.exists(methodNode)) {
@@ -95,7 +106,7 @@ public class Main {
             // Add arguments as data dependency in the graph
             if (n.getArguments().size() > 0) {
                 for (Expression argument : n.getArguments()) {
-                    String argumentNode = Util.getSimpleClassName(argument.calculateResolvedType().describe());
+                    String argumentNode = Util.getSimplifiedName(argument.calculateResolvedType().describe());
                     if (!graph.exists(argumentNode)) {
                         graph.addNode(argumentNode);
                         graph.link(methodNode, argumentNode);
@@ -115,6 +126,22 @@ public class Main {
                 }
             }
             return null;
+        }
+    }
+
+    private static class MethodCallVisitor extends VoidVisitorAdapter<Void> {
+
+        private String method = null;
+
+        private void setMethod(String method) {
+            this.method = Util.getSimplifiedName(method);
+        }
+
+        @Override
+        public void visit(MethodDeclaration n, Void arg) {
+            if (this.method.equals(String.valueOf(n.getName()))) {
+                System.out.println(n.getBody());
+            }
         }
     }
 }
