@@ -21,10 +21,10 @@ public class Util {
      * @param dir The path of main/java directory
      * @return All the files in the directory
      */
-    public static Set<File> listFiles(File dir) {
+    public static Set<File> getFiles(File dir) {
         for (File entry : dir.listFiles()) {
             if (entry.isDirectory()) {
-                listFiles(entry);
+                getFiles(entry);
             } else {
                 files.add(entry);
             }

@@ -58,7 +58,7 @@ public class Main {
      * @throws FileNotFoundException
      */
     public static File getEntry() throws FileNotFoundException {
-        for (File file : Util.listFiles(new File(DIR_PATH))) {
+        for (File file : Util.getFiles(new File(DIR_PATH))) {
             cu = StaticJavaParser.parse(file);
             String entry_class = cu.accept(new ClassVisitor(), null);
             Pattern pattern = Pattern.compile(".*/" + entry_class + ".java");
