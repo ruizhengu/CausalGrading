@@ -45,9 +45,9 @@ public class Main {
 //        System.out.println("Entry Class: " + entry);
 
         Set<String> callers = getEntryCallers(entry);
-        for (String call : callers) {
-            getCalleeFromCaller(call);
-        }
+//        for (String call : callers) {
+//            getCalleeFromCaller(call);
+//        }
 //        graph.generate("Cafe.dot");
     }
 
@@ -77,12 +77,12 @@ public class Main {
         return visitor.getCaller();
     }
 
-    public static void getCalleeFromCaller(String method) throws FileNotFoundException {
-        cu = StaticJavaParser.parse(Util.getFileOfMethod(method));
-        MethodCallVisitor visitor = new MethodCallVisitor();
-        visitor.setMethod(method);
-        cu.accept(visitor, null);
-    }
+//    public static void getCalleeFromCaller(String method) throws FileNotFoundException {
+//        cu = StaticJavaParser.parse(Util.getFileOfMethod(method));
+//        MethodCallVisitor visitor = new MethodCallVisitor();
+//        visitor.setMethod(method);
+//        cu.accept(visitor, null);
+//    }
 
     private static class EntryMethodVisitor extends VoidVisitorAdapter<Void> {
 

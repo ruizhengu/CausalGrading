@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Util {
+
+    //    private static String PACKAGE_NAME = ""
     public static Set<File> files = new HashSet<>();
 
     /**
@@ -55,13 +57,32 @@ public class Util {
      * @return e.g. uk.ac.sheffield.com1003.cafe.Cafe.addRecipe
      */
     public static String getFullyQualifiedClassName(MethodCallExpr expr) {
+//        System.out.println(expr.resolve().getPackageName());
+//        System.out.println(expr.getScope().get().calculateResolvedType().describe());
         return expr.getScope().get().calculateResolvedType().describe() + "." + expr.getName();
     }
 
-    public static File getFileOfMethod(String method) {
+    public static boolean ifPackageClass(MethodCallExpr expr) {
+        String qualifiedName = expr.resolve().getQualifiedName();
+        String packageName = expr.resolve().getPackageName();
+        System.out.println("qualified name " + qualifiedName);
+        System.out.println("package name " + packageName);
+        if (qualifiedName.contains(packageName)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+//    public static File getClassByMethod(MethodCallExpr expr) {
+//        String fullyQualifiedClassName = getFullyQualifiedClassName(expr);
+//        return getFileOfMethod(fullyQualifiedClassName);
+//    }
+
+    public static File getFileOfMethod(MethodCallExpr expr) {
         String classOfMethod = null;
         Pattern p = Pattern.compile("(.*)\\..*");
-        Matcher m = p.matcher(method);
+        Matcher m = p.matcher(expr.resolve().getQualifiedName());
         if (m.find()) {
             classOfMethod = m.group(1);
         }
