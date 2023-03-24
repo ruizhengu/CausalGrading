@@ -7,13 +7,15 @@ IDIngredient [label="Ingredient"];
 IDWater [label="Water"];
 IDaddRecipe [label="addRecipe"];
 IDRecipe [label="Recipe"];
-IDgetName [label="getName"];
+IDMilk [label="Milk"];
+IDprintMenu [label="printMenu"];
 IDmain -> IDaddIngredient;
 IDmain -> IDaddRecipe;
+IDmain -> IDprintMenu;
 IDaddIngredient -> IDCoffee;
 IDaddIngredient -> IDequals;
 IDaddIngredient -> IDWater;
+IDaddIngredient -> IDMilk;
 IDequals -> IDIngredient;
 IDaddRecipe -> IDRecipe;
-IDaddRecipe -> IDgetName;
 }

@@ -1,6 +1,5 @@
 package org.example;
 
-import com.github.javaparser.JavaParser;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -20,20 +19,19 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.System.exit;
 
 public class App {
 
-    public static String DIR_PATH = "/home/ruizhen/Projects/Experiment/com1003_cafe/src/main/java";
+    public static String DIR_PATH;
     public static String PACKAGE_NAME = "uk.ac.sheffield.com1003.cafe";
     // The method used as the entry
     public static String ENTRY_NODE = "main";
     public static Digraph graph = new Digraph("Cafe");
     public static CompilationUnit cu;
-    public static String RECURSION_FLAG = null;
     public static Set<File> FILES;
 
     public static void main(String[] args) throws FileNotFoundException {
+        DIR_PATH = Util.getOSPath();
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
         combinedTypeSolver.add(new JavaParserTypeSolver(DIR_PATH));
@@ -45,6 +43,7 @@ public class App {
         File entry = getEntry();
         graph.addNode(ENTRY_NODE);
         graphBuild(entry, ENTRY_NODE, null);
+        graph.generate("Cafe.dot");
     }
 
     private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
@@ -53,6 +52,9 @@ public class App {
             // Identify all the method declarations in the file
             @Override
             public void visit(MethodDeclaration n, Void arg) {
+                if (!n.getNameAsString().equals(startNode)) {
+                    return;
+                }
                 new VoidVisitorAdapter<Void>() {
                     // Identify all the method calls in the current declared method
                     @Override
@@ -60,8 +62,7 @@ public class App {
                         try {
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
-                                    graph.generate("Cafe.dot");
-                                    System.exit(0);
+                                    return;
                                 }
                                 if (!graph.exists(m.getNameAsString())) {
                                     graph.addNode(m.getNameAsString());

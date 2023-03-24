@@ -1,21 +1,32 @@
 package org.example;
 
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.utils.CodeGenerationUtils;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Util {
 
-    //    private static String PACKAGE_NAME = ""
     public static Set<File> files = new HashSet<>();
+
+    /**
+     * Get the project path by the current OS
+     *
+     * @return the abs path of /src/main/java
+     */
+    public static String getOSPath() {
+        String macPath = "/Users/ray/Project/PhD/GTA/com1003_cafe/src/main/java";
+        String linuxPath = "/home/ruizhen/Projects/Experiment/com1003_cafe/src/main/java";
+        if (System.getProperty("os.name").startsWith("Mac")) {
+            return macPath;
+        } else {
+            return linuxPath;
+        }
+    }
 
     /**
      * Get all the files except the test files in the project.
@@ -24,7 +35,7 @@ public class Util {
      * @return All the files in the directory
      */
     public static Set<File> getFiles(File dir) {
-        for (File entry : dir.listFiles()) {
+        for (File entry : Objects.requireNonNull(dir.listFiles())) {
             if (entry.isDirectory()) {
                 getFiles(entry);
             } else {
@@ -35,50 +46,10 @@ public class Util {
     }
 
     /**
-     * Get the simple class name from a fully qualified class name
-     *
-     * @param fullyQualifiedName e.g. uk.ac.sheffield.com1003.cafe.ingredients.Coffee
-     * @return e.g. Coffee
+     * Get the .java file the method belongs by the method call expression
+     * @param expr Method call expression object
+     * @return The .java file the method belongs
      */
-    public static String getSimplifiedName(String fullyQualifiedName) {
-        Pattern p = Pattern.compile(".*\\.(.*)");
-        Matcher m = p.matcher(fullyQualifiedName);
-        if (m.find()) {
-            return m.group(1);
-        }
-        return null;
-    }
-
-
-    /**
-     * Get the fully qualified class name from a method call expression
-     *
-     * @param expr A MethodCallExpr object
-     * @return e.g. uk.ac.sheffield.com1003.cafe.Cafe.addRecipe
-     */
-    public static String getFullyQualifiedClassName(MethodCallExpr expr) {
-//        System.out.println(expr.resolve().getPackageName());
-//        System.out.println(expr.getScope().get().calculateResolvedType().describe());
-        return expr.getScope().get().calculateResolvedType().describe() + "." + expr.getName();
-    }
-
-    public static boolean ifPackageClass(MethodCallExpr expr) {
-        String qualifiedName = expr.resolve().getQualifiedName();
-        String packageName = expr.resolve().getPackageName();
-        System.out.println("qualified name " + qualifiedName);
-        System.out.println("package name " + packageName);
-        if (qualifiedName.contains(packageName)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-//    public static File getClassByMethod(MethodCallExpr expr) {
-//        String fullyQualifiedClassName = getFullyQualifiedClassName(expr);
-//        return getFileOfMethod(fullyQualifiedClassName);
-//    }
-
     public static File getFileOfMethod(MethodCallExpr expr) {
         String classOfMethod = null;
         Pattern p = Pattern.compile("(.*)\\..*");
