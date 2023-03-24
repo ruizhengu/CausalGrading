@@ -65,4 +65,8 @@ public class Util {
         }
         return null;
     }
+
+    public static String getSimpleName(String fullyQualifiedName) {
+        return fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf('.') + 1);
+    }
 }

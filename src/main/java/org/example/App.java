@@ -56,55 +56,35 @@ public class App {
                 if (!n.getNameAsString().equals(startNode)) {
                     return;
                 }
-                System.out.println("Method Declaration: "  + n.getNameAsString());
+//                System.out.println("Method Declaration: "  + n.getNameAsString());
                 new VoidVisitorAdapter<Void>() {
                     // Identify all the method calls in the current declared method
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         try {
-
                             // The method call itself is a method created in the project
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
-                                if (!graph.nodeExists(m.getNameAsString())) {
-                                    graph.addNode(m.getNameAsString());
-                                    graph.link(startNode, m.getNameAsString());
-                                }
-                            } else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-
-                            }
-
-
-                            if (m.resolve().getPackageName().contains(PACKAGE_NAME) || m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-                                System.out.println("Method Call Expression: " + m.getNameAsString() + " Arguments: " + m.getArguments());
-                                if (m.resolve().getQualifiedName().equals(lastMethod)) {
-                                    return;
-                                }
-                                if (!graph.nodeExists(m.getNameAsString())) {
-                                    graph.addNode(m.getNameAsString());
-                                    graph.link(startNode, m.getNameAsString());
-                                }
+                                addNodeAndEdge(startNode, m.getNameAsString());
+                                // Data dependency
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
-                                        String fullyQualifiedName = argument.calculateResolvedType().describe();
-                                        String argumentNode = fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf('.') + 1);
-                                        if (!graph.nodeExists(argumentNode)) {
-                                            graph.addNode(argumentNode);
-                                            graph.link(m.getNameAsString(), argumentNode);
-                                        }
-                                        if (argument instanceof MethodCallExpr) {
-                                            String argumentMethodNode = ((MethodCallExpr) argument).resolve().getName();
-                                            if (!graph.nodeExists(argumentMethodNode)) {
-                                                graph.addNode(argumentMethodNode);
-                                                graph.link(m.getNameAsString(), argumentMethodNode);
-                                            }
-                                            m = (MethodCallExpr) argument;
-                                        }
+                                        String argumentNode = Util.getSimpleName(argument.calculateResolvedType().describe());
+                                        addNodeAndEdge(m.getNameAsString(), argumentNode);
                                     }
                                 }
                                 graphBuild(Util.getFileOfMethod(m), m.getNameAsString(), m.resolve().getQualifiedName());
+                            } else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
+//                                System.out.println("Method Call Expression: " + m.getNameAsString());
+                                for (Expression argument : m.getArguments()) {
+                                    String argumentMethodNode = ((MethodCallExpr) argument).resolve().getName();
+                                    addNodeAndEdge(n.getNameAsString(), argumentMethodNode);
+                                    m = (MethodCallExpr) argument;
+                                    graphBuild(Util.getFileOfMethod(m), m.getNameAsString(), m.resolve().getQualifiedName());
+                                }
+
                             }
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);
@@ -137,5 +117,14 @@ public class App {
             }
         }
         throw new FileNotFoundException(String.format("Cannot find the class that has the method '%s'", ENTRY_NODE));
+    }
+
+    private static void addNodeAndEdge(String startNode, String endNode) {
+        if (!graph.nodeExists(endNode)) {
+            graph.addNode(endNode);
+            graph.link(startNode, endNode);
+        } else if (!graph.edgeExists(startNode, endNode)) {
+            graph.link(startNode, endNode);
+        }
     }
 }
