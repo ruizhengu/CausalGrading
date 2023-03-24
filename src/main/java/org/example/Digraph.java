@@ -88,17 +88,17 @@ public class Digraph {
             writer.println("digraph " + graphname + " {");
             for (Node n : nodes) {
                 if (n.hasName())
-                    writer.println("ID" + n.nodeID + " [label=\"" + n.nodeName + "\"];");
+                    writer.println("\"" + n.nodeID + "\" [label=\"" + n.nodeName + "\"];");
                 else
-                    writer.println("ID" + n.nodeID + " [label=\"" + n.nodeID + "\"];");
+                    writer.println("\"" + n.nodeID + "\" [label=\"" + n.nodeID + "\"];");
             }
             for (Node n : nodes) {
                 if (n.children.size() > 0) {
                     for (Node c : n.children) {
                         if (c.hasLabel())
-                            writer.println("ID" + n.nodeID + " -> ID" + c.nodeID + " [label=\"" + c.linkLabel + "\"];");
+                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\" [label=\"" + c.linkLabel + "\"];");
                         else
-                            writer.println("ID" + n.nodeID + " -> ID" + c.nodeID + ";");
+                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\";");
                     }
                 }
             }

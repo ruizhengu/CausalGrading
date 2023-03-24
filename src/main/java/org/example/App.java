@@ -26,7 +26,7 @@ public class App {
     public static String DIR_PATH;
     public static String PACKAGE_NAME = "uk.ac.sheffield.com1003.cafe";
     // The method used as the entry
-    public static String ENTRY_NODE = "main";
+    public static String ENTRY_NODE = "App.main";
     public static Digraph graph = new Digraph("Cafe");
     public static CompilationUnit cu;
     public static Set<File> FILES;
@@ -53,38 +53,39 @@ public class App {
             // Identify all the method declarations in the file
             @Override
             public void visit(MethodDeclaration n, Void arg) {
-                if (!n.getNameAsString().equals(startNode)) {
+                String methodDeclarationClassMethod = Util.getClassMethod(n.resolve().getQualifiedName());
+                if (!methodDeclarationClassMethod.equals(startNode)) {
                     return;
                 }
-//                System.out.println("Method Declaration: "  + n.getNameAsString());
                 new VoidVisitorAdapter<Void>() {
                     // Identify all the method calls in the current declared method
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
+                        String methodCallClassMethod = Util.getClassMethod(m.resolve().getQualifiedName());
                         try {
                             // The method call itself is a method created in the project
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
-                                addNodeAndEdge(startNode, m.getNameAsString());
+                                addNodeAndEdge(startNode, methodCallClassMethod);
                                 // Data dependency
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
-                                        String argumentNode = Util.getSimpleName(argument.calculateResolvedType().describe());
-                                        addNodeAndEdge(m.getNameAsString(), argumentNode);
+                                        String argumentNode = Util.getClassMethod(argument.calculateResolvedType().describe());
+                                        addNodeAndEdge(methodCallClassMethod, argumentNode);
                                     }
                                 }
-                                graphBuild(Util.getFileOfMethod(m), m.getNameAsString(), m.resolve().getQualifiedName());
-                            } else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-//                                System.out.println("Method Call Expression: " + m.getNameAsString());
+                                graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
+                            }
+                            // If the arguments are method calls
+                            else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
                                 for (Expression argument : m.getArguments()) {
-                                    String argumentMethodNode = ((MethodCallExpr) argument).resolve().getName();
-                                    addNodeAndEdge(n.getNameAsString(), argumentMethodNode);
+                                    String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
+                                    addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode);
                                     m = (MethodCallExpr) argument;
-                                    graphBuild(Util.getFileOfMethod(m), m.getNameAsString(), m.resolve().getQualifiedName());
+                                    graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
                                 }
-
                             }
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);

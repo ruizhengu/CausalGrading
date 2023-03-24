@@ -3,6 +3,7 @@ package org.example;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -47,6 +48,7 @@ public class Util {
 
     /**
      * Get the .java file the method belongs by the method call expression
+     *
      * @param expr Method call expression object
      * @return The .java file the method belongs
      */
@@ -66,7 +68,15 @@ public class Util {
         return null;
     }
 
-    public static String getSimpleName(String fullyQualifiedName) {
-        return fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf('.') + 1);
+
+    /**
+     * Get the class name and the method name from a fully qualified name
+     *
+     * @param fullyQualifiedName e.g. uk.ac.sheffield.com1003.cafe.ingredients.Water
+     * @return e.g. ingredients.Water
+     */
+    public static String getClassMethod(String fullyQualifiedName) {
+        String[] splits = fullyQualifiedName.split("\\.");
+        return splits[splits.length - 2] + "." + splits[splits.length - 1];
     }
 }
