@@ -72,8 +72,13 @@ public class App {
                                 // Data dependency
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
-                                        String argumentNode = Util.getClassMethod(argument.calculateResolvedType().describe());
-                                        addNodeAndEdge(methodCallClassMethod, argumentNode);
+                                        if (argument instanceof MethodCallExpr) {
+                                            String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
+                                            addNodeAndEdge(methodCallClassMethod, argumentMethodNode);
+                                        } else {
+                                            String argumentNode = Util.getClassMethod(argument.calculateResolvedType().describe());
+                                            addNodeAndEdge(methodCallClassMethod, argumentNode);
+                                        }
                                     }
                                 }
                                 graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
@@ -81,10 +86,12 @@ public class App {
                             // If the arguments are method calls
                             else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
                                 for (Expression argument : m.getArguments()) {
-                                    String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
-                                    addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode);
-                                    m = (MethodCallExpr) argument;
-                                    graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
+                                    if (argument instanceof MethodCallExpr) {
+                                        String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
+                                        addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode);
+                                        m = (MethodCallExpr) argument;
+                                        graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
+                                    }
                                 }
                             }
                         } catch (FileNotFoundException e) {

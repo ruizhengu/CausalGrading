@@ -9,12 +9,15 @@ digraph Cafe {
 "Cafe.addRecipe" [label="Cafe.addRecipe"];
 "cafe.Recipe" [label="cafe.Recipe"];
 "ingredients.Milk" [label="ingredients.Milk"];
+"Cafe.removeRecipe" [label="Cafe.removeRecipe"];
+"Recipe.getName" [label="Recipe.getName"];
 "Cafe.printMenu" [label="Cafe.printMenu"];
 "Cafe.greeting" [label="Cafe.greeting"];
-"Recipe.getName" [label="Recipe.getName"];
 "Recipe.getPrice" [label="Recipe.getPrice"];
 "App.main" -> "Recipe.addIngredient";
 "App.main" -> "Cafe.addRecipe";
+"App.main" -> "Cafe.removeRecipe";
+"App.main" -> "Recipe.getName";
 "App.main" -> "Cafe.printMenu";
 "Recipe.addIngredient" -> "ingredients.Coffee";
 "Recipe.addIngredient" -> "Ingredient.equals";
@@ -23,6 +26,7 @@ digraph Cafe {
 "Ingredient.equals" -> "ingredients.Ingredient";
 "Ingredient.equals" -> "Ingredient.getName";
 "Cafe.addRecipe" -> "cafe.Recipe";
+"Cafe.removeRecipe" -> "Recipe.getName";
 "Cafe.printMenu" -> "Cafe.greeting";
 "Cafe.printMenu" -> "Recipe.getName";
 "Cafe.printMenu" -> "Recipe.getPrice";
