@@ -62,12 +62,27 @@ public class App {
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         try {
+
+                            // The method call itself is a method created in the project
+                            if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
+                                if (m.resolve().getQualifiedName().equals(lastMethod)) {
+                                    return;
+                                }
+                                if (!graph.nodeExists(m.getNameAsString())) {
+                                    graph.addNode(m.getNameAsString());
+                                    graph.link(startNode, m.getNameAsString());
+                                }
+                            } else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
+
+                            }
+
+
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME) || m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
                                 System.out.println("Method Call Expression: " + m.getNameAsString() + " Arguments: " + m.getArguments());
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
-                                if (!graph.exists(m.getNameAsString())) {
+                                if (!graph.nodeExists(m.getNameAsString())) {
                                     graph.addNode(m.getNameAsString());
                                     graph.link(startNode, m.getNameAsString());
                                 }
@@ -75,13 +90,13 @@ public class App {
                                     for (Expression argument : m.getArguments()) {
                                         String fullyQualifiedName = argument.calculateResolvedType().describe();
                                         String argumentNode = fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf('.') + 1);
-                                        if (!graph.exists(argumentNode)) {
+                                        if (!graph.nodeExists(argumentNode)) {
                                             graph.addNode(argumentNode);
                                             graph.link(m.getNameAsString(), argumentNode);
                                         }
                                         if (argument instanceof MethodCallExpr) {
                                             String argumentMethodNode = ((MethodCallExpr) argument).resolve().getName();
-                                            if (!graph.exists(argumentMethodNode)) {
+                                            if (!graph.nodeExists(argumentMethodNode)) {
                                                 graph.addNode(argumentMethodNode);
                                                 graph.link(m.getNameAsString(), argumentMethodNode);
                                             }

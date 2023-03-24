@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Digraph {
     private String graphname;
@@ -14,7 +15,7 @@ public class Digraph {
     }
 
     public Digraph addNode(String nodeID) {
-        if (exists(nodeID)) {
+        if (nodeExists(nodeID)) {
             System.out.println("Error: Node " + nodeID + " already exists.");
             System.exit(0);
         }
@@ -24,11 +25,20 @@ public class Digraph {
         return this;
     }
 
-    public boolean exists(String nodeID) {
+    public boolean nodeExists(String nodeID) {
         for (Node n : nodes) {
             if (n.nodeID.equals(nodeID)) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    public boolean edgeExists(String parentNodeID, String childNodeID) {
+        Node parent = getNode(parentNodeID);
+        ArrayList<Node> children = parent.getChildren();
+        if (children.contains(getNode(childNodeID))) {
+            return true;
         }
         return false;
     }
@@ -43,7 +53,7 @@ public class Digraph {
     }
 
     public Node addNode(String nodeID, String nodeName) {
-        if (exists(nodeID)) {
+        if (nodeExists(nodeID)) {
             System.out.println("Error: Node " + nodeID + " already exists.");
             System.exit(0);
         }
@@ -125,6 +135,10 @@ public class Digraph {
         public Node setName(String nodeName) {
             this.nodeName = nodeName;
             return this;
+        }
+
+        public ArrayList<Node> getChildren() {
+            return this.children;
         }
 
         public Node addChild(Node newChild) {
