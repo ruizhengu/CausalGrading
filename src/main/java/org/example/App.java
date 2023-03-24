@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -55,12 +56,14 @@ public class App {
                 if (!n.getNameAsString().equals(startNode)) {
                     return;
                 }
+                System.out.println("Method Declaration: "  + n.getNameAsString());
                 new VoidVisitorAdapter<Void>() {
                     // Identify all the method calls in the current declared method
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         try {
-                            if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
+                            if (m.resolve().getPackageName().contains(PACKAGE_NAME) || m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
+                                System.out.println("Method Call Expression: " + m.getNameAsString() + " Arguments: " + m.getArguments());
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
@@ -75,6 +78,14 @@ public class App {
                                         if (!graph.exists(argumentNode)) {
                                             graph.addNode(argumentNode);
                                             graph.link(m.getNameAsString(), argumentNode);
+                                        }
+                                        if (argument instanceof MethodCallExpr) {
+                                            String argumentMethodNode = ((MethodCallExpr) argument).resolve().getName();
+                                            if (!graph.exists(argumentMethodNode)) {
+                                                graph.addNode(argumentMethodNode);
+                                                graph.link(m.getNameAsString(), argumentMethodNode);
+                                            }
+                                            m = (MethodCallExpr) argument;
                                         }
                                     }
                                 }
