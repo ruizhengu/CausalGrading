@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
@@ -49,16 +50,35 @@ public class App {
 
     private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
         cu = StaticJavaParser.parse(file);
+
+        // Identify all the method declarations in the file
         new VoidVisitorAdapter<Void>() {
-            // Identify all the method declarations in the file
             @Override
             public void visit(MethodDeclaration n, Void arg) {
                 String methodDeclarationClassMethod = Util.getClassMethod(n.resolve().getQualifiedName());
                 if (!methodDeclarationClassMethod.equals(startNode)) {
                     return;
                 }
+                // Check data dependency in object creations
                 new VoidVisitorAdapter<Void>() {
-                    // Identify all the method calls in the current declared method
+                    @Override
+                    public void visit(ObjectCreationExpr o, Void arg) {
+                        if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
+                            // The type of the object created
+                            addNodeAndEdge(startNode, o.resolve().getName());
+                            // The types of arguments passed in the object creation expression
+                            if (o.getArguments().size() > 0) {
+                                for (Expression argument : o.getArguments()) {
+                                    if (argument.calculateResolvedType().describe().contains(PACKAGE_NAME)) {
+                                        addNodeAndEdge(startNode, Util.getClassMethod(argument.calculateResolvedType().describe()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }.visit(cu, null);
+                // Identify all the method calls in the current declared method
+                new VoidVisitorAdapter<Void>() {
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         String methodCallClassMethod = Util.getClassMethod(m.resolve().getQualifiedName());
@@ -101,6 +121,8 @@ public class App {
                 }.visit(n, null);
             }
         }.visit(cu, null);
+
+
     }
 
     private static File getEntry() throws FileNotFoundException {
