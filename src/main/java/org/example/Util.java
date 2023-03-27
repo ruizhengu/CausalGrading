@@ -70,21 +70,48 @@ public class Util {
 
 
     /**
-     * Get the class name and the method name from a fully qualified name
+     * Get the last segment from a fully qualified name
      *
      * @param fullyQualifiedName e.g. uk.ac.sheffield.com1003.cafe.ingredients.Water
-     * @return e.g. ingredients.Water
+     * @return e.g. Water
      */
     public static String getLastSegment(String fullyQualifiedName) {
         String[] splits = fullyQualifiedName.split("\\.");
         return splits[splits.length - 1];
     }
 
-    public static String getLastSegment(String fullyQualifiedName, int number) {
+    /**
+     * Get the last 'length' number of segments from a fully qualified name
+     *
+     * @param fullyQualifiedName e.g. uk.ac.sheffield.com1003.cafe.ingredients.Water
+     * @param length             the length of segments
+     * @return e.g. ingredients.Water if index == 2
+     */
+    public static String getLastSegment(String fullyQualifiedName, int length) {
         String[] splits = fullyQualifiedName.split("\\.");
-        StringBuilder output = new StringBuilder(splits[splits.length - number]);
-        for (int i = 1; i < number; i++) {
-            output.append(".").append(splits[splits.length - number + i]);
+        StringBuilder output = new StringBuilder(splits[splits.length - length]);
+        for (int i = 1; i < length; i++) {
+            output.append(".").append(splits[splits.length - length + i]);
+        }
+        return output.toString();
+    }
+
+    /**
+     * Get the 'length' number of segments start from 'index'
+     *
+     * @param fullyQualifiedName e.g. e.g. uk.ac.sheffield.com1003.cafe.ingredients.Water.Type
+     * @param index              the index of the segments (from the end of the string)
+     * @param length             the length of the segments
+     * @return e.g. Water if index == 2, length == 1
+     */
+    public static String getLastSegment(String fullyQualifiedName, int index, int length) {
+        if (length > index) {
+            throw new IndexOutOfBoundsException();
+        }
+        String[] splits = fullyQualifiedName.split("\\.");
+        StringBuilder output = new StringBuilder(splits[splits.length - index]);
+        for (int i = 1; i < length; i++) {
+            output.append(".").append(splits[splits.length - length + i]);
         }
         return output.toString();
     }

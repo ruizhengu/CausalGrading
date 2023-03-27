@@ -11,6 +11,7 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -52,22 +53,11 @@ public class App {
     private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
         cu = StaticJavaParser.parse(file);
 
-
-//        new VoidVisitorAdapter<Void>() {
-//            @Override
-//            public void visit(ClassOrInterfaceDeclaration c, Void arg) {
-//                System.out.println(file);
-//                System.out.println(c.getFullyQualifiedName());
-//            }
-//        }.visit(cu, null);
-
-
         // Identify all the method declarations in the file
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration n, Void arg) {
                 String methodDeclarationClassMethod = Util.getLastSegment(n.resolve().getQualifiedName(), 2);
-                System.out.println(methodDeclarationClassMethod);
                 if (!methodDeclarationClassMethod.equals(startNode)) {
                     return;
                 }
@@ -76,53 +66,32 @@ public class App {
                     @Override
                     public void visit(ObjectCreationExpr o, Void arg) {
                         if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
-                            // The type of the object created
                             addNodeAndEdge(startNode, o.resolve().getName());
-                            // The types of arguments passed in the object creation expression
                             if (o.getArguments().size() > 0) {
                                 for (Expression argument : o.getArguments()) {
-                                    if (argument.calculateResolvedType().describe().contains(PACKAGE_NAME)) {
-                                        addNodeAndEdge(startNode, Util.getLastSegment(argument.calculateResolvedType().describe(), 2));
-                                    }
+                                    addArgumentDependence(argument, startNode);
                                 }
                             }
                         }
                     }
                 }.visit(cu, null);
-
                 // Identify all the method calls in the current declared method
                 new VoidVisitorAdapter<Void>() {
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         String methodCallClassMethod = Util.getLastSegment(m.resolve().getQualifiedName(), 2);
                         try {
-                            // The method call itself is a method created in the project
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
                                 addNodeAndEdge(startNode, methodCallClassMethod);
-                                // Data dependency
+                                // Data dependency in the arguments passed in method calls
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
-                                        if (argument instanceof MethodCallExpr) {
-                                            String argumentMethodNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
-                                            addNodeAndEdge(methodCallClassMethod, argumentMethodNode);
-                                        } else {
-//                                            // If one of the arguments is an object creation expression, e.g. Cafe cafe = new Cafe("Central Perk");
-//                                            if (argument.isObjectCreationExpr()) {
-//                                                addNodeAndEdge(methodCallClassMethod, argument.asObjectCreationExpr().getTypeAsString());
-//                                            } else {
-//                                                System.out.println(m);
-//                                                System.out.println(argument.calculateResolvedType().describe());
-                                            String argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe());
-                                            addNodeAndEdge(methodCallClassMethod, argumentNode);
-//                                            }
-                                        }
+                                        addArgumentDependence(argument, methodCallClassMethod);
                                     }
                                 }
-//                                System.out.println(m);
-//                                System.out.println(methodCallClassMethod);
                                 graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
                             }
                             // If the arguments are method calls
@@ -143,8 +112,6 @@ public class App {
                 }.visit(n, null);
             }
         }.visit(cu, null);
-
-
     }
 
     private static File getEntry() throws FileNotFoundException {
@@ -177,6 +144,26 @@ public class App {
             graph.link(startNode, endNode);
         } else if (!graph.edgeExists(startNode, endNode)) {
             graph.link(startNode, endNode);
+        }
+    }
+
+    private static void addArgumentDependence(Expression argument, String startNode) {
+        String argumentNode;
+        if (argument.calculateResolvedType().describe().contains(PACKAGE_NAME)) {
+            if (argument instanceof MethodCallExpr) {
+                // If argument is a method call expression
+                argumentNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
+            } else if (argument.isObjectCreationExpr()) {
+                // If argument is a new object creation expression
+                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe());
+            } else if (argument.isFieldAccessExpr()) {
+                // If argument is an instance variable
+                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe(), 2, 1);
+            } else {
+                // If argument is an object reference
+                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe(), 1);
+            }
+            addNodeAndEdge(startNode, argumentNode);
         }
     }
 }
