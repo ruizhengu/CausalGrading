@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
@@ -51,11 +52,22 @@ public class App {
     private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
         cu = StaticJavaParser.parse(file);
 
+
+//        new VoidVisitorAdapter<Void>() {
+//            @Override
+//            public void visit(ClassOrInterfaceDeclaration c, Void arg) {
+//                System.out.println(file);
+//                System.out.println(c.getFullyQualifiedName());
+//            }
+//        }.visit(cu, null);
+
+
         // Identify all the method declarations in the file
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration n, Void arg) {
-                String methodDeclarationClassMethod = Util.getClassMethod(n.resolve().getQualifiedName());
+                String methodDeclarationClassMethod = Util.getLastSegment(n.resolve().getQualifiedName(), 2);
+                System.out.println(methodDeclarationClassMethod);
                 if (!methodDeclarationClassMethod.equals(startNode)) {
                     return;
                 }
@@ -70,18 +82,19 @@ public class App {
                             if (o.getArguments().size() > 0) {
                                 for (Expression argument : o.getArguments()) {
                                     if (argument.calculateResolvedType().describe().contains(PACKAGE_NAME)) {
-                                        addNodeAndEdge(startNode, Util.getClassMethod(argument.calculateResolvedType().describe()));
+                                        addNodeAndEdge(startNode, Util.getLastSegment(argument.calculateResolvedType().describe(), 2));
                                     }
                                 }
                             }
                         }
                     }
                 }.visit(cu, null);
+
                 // Identify all the method calls in the current declared method
                 new VoidVisitorAdapter<Void>() {
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
-                        String methodCallClassMethod = Util.getClassMethod(m.resolve().getQualifiedName());
+                        String methodCallClassMethod = Util.getLastSegment(m.resolve().getQualifiedName(), 2);
                         try {
                             // The method call itself is a method created in the project
                             if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
@@ -93,21 +106,30 @@ public class App {
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
                                         if (argument instanceof MethodCallExpr) {
-                                            String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
+                                            String argumentMethodNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
                                             addNodeAndEdge(methodCallClassMethod, argumentMethodNode);
                                         } else {
-                                            String argumentNode = Util.getClassMethod(argument.calculateResolvedType().describe());
+//                                            // If one of the arguments is an object creation expression, e.g. Cafe cafe = new Cafe("Central Perk");
+//                                            if (argument.isObjectCreationExpr()) {
+//                                                addNodeAndEdge(methodCallClassMethod, argument.asObjectCreationExpr().getTypeAsString());
+//                                            } else {
+//                                                System.out.println(m);
+//                                                System.out.println(argument.calculateResolvedType().describe());
+                                            String argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe());
                                             addNodeAndEdge(methodCallClassMethod, argumentNode);
+//                                            }
                                         }
                                     }
                                 }
+//                                System.out.println(m);
+//                                System.out.println(methodCallClassMethod);
                                 graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
                             }
                             // If the arguments are method calls
                             else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
                                 for (Expression argument : m.getArguments()) {
                                     if (argument instanceof MethodCallExpr) {
-                                        String argumentMethodNode = Util.getClassMethod(((MethodCallExpr) argument).resolve().getQualifiedName());
+                                        String argumentMethodNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
                                         addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode);
                                         m = (MethodCallExpr) argument;
                                         graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());

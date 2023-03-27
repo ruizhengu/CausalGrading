@@ -75,8 +75,17 @@ public class Util {
      * @param fullyQualifiedName e.g. uk.ac.sheffield.com1003.cafe.ingredients.Water
      * @return e.g. ingredients.Water
      */
-    public static String getClassMethod(String fullyQualifiedName) {
+    public static String getLastSegment(String fullyQualifiedName) {
         String[] splits = fullyQualifiedName.split("\\.");
-        return splits[splits.length - 2] + "." + splits[splits.length - 1];
+        return splits[splits.length - 1];
+    }
+
+    public static String getLastSegment(String fullyQualifiedName, int number) {
+        String[] splits = fullyQualifiedName.split("\\.");
+        StringBuilder output = new StringBuilder(splits[splits.length - number]);
+        for (int i = 1; i < number; i++) {
+            output.append(".").append(splits[splits.length - number + i]);
+        }
+        return output.toString();
     }
 }
