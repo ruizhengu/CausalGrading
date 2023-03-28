@@ -19,6 +19,7 @@ digraph Cafe {
 "Cafe.printMenu" [label="Cafe.printMenu"];
 "Cafe.greeting" [label="Cafe.greeting"];
 "Recipe.getPrice" [label="Recipe.getPrice"];
+"Syrup" [label="Syrup"];
 "App.main" -> "Cafe";
 "App.main" -> "Recipe";
 "App.main" -> "Coffee";
@@ -29,6 +30,9 @@ digraph Cafe {
 "App.main" -> "Cafe.removeRecipe";
 "App.main" -> "Recipe.getName";
 "App.main" -> "Cafe.printMenu";
+"Coffee" -> "Ingredient";
+"Water" -> "Ingredient";
+"Milk" -> "Ingredient";
 "Recipe.addIngredient" -> "Coffee";
 "Recipe.addIngredient" -> "TooManyIngredientsException";
 "Recipe.addIngredient" -> "Ingredient.equals";
@@ -52,4 +56,5 @@ digraph Cafe {
 "Cafe.printMenu" -> "Cafe.greeting";
 "Cafe.printMenu" -> "Recipe.getName";
 "Cafe.printMenu" -> "Recipe.getPrice";
+"Syrup" -> "Ingredient";
 }

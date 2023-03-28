@@ -4,6 +4,7 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
@@ -47,12 +48,12 @@ public class App {
         File entry = getEntry();
         graph.addNode(ENTRY_NODE);
         graphBuild(entry, ENTRY_NODE, null);
+        handleInheritance();
         graph.generate("Cafe.dot");
     }
 
     private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
         cu = StaticJavaParser.parse(file);
-
         // Identify all the method declarations in the file
         new VoidVisitorAdapter<Void>() {
             @Override
@@ -114,6 +115,24 @@ public class App {
         }.visit(cu, null);
     }
 
+    private static void handleInheritance() throws FileNotFoundException {
+        for (File file : FILES) {
+            cu = StaticJavaParser.parse(file);
+            new VoidVisitorAdapter<Void>() {
+                @Override
+                public void visit(ClassOrInterfaceDeclaration c, Void arg) {
+                    if (c.getExtendedTypes().size() > 0) {
+                        for (ClassOrInterfaceType type : c.getExtendedTypes()) {
+                            if (type.resolve().describe().contains(PACKAGE_NAME)) {
+                                addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
+                            }
+                        }
+                    }
+                }
+            }.visit(cu, null);
+        }
+    }
+
     private static File getEntry() throws FileNotFoundException {
         for (File file : FILES) {
             cu = StaticJavaParser.parse(file);
@@ -141,8 +160,10 @@ public class App {
     private static void addNodeAndEdge(String startNode, String endNode) {
         if (!graph.nodeExists(endNode)) {
             graph.addNode(endNode);
-            graph.link(startNode, endNode);
-        } else if (!graph.edgeExists(startNode, endNode)) {
+        } else if (graph.nodeExists(endNode) && !graph.nodeExists(startNode)) {
+            graph.addNode(startNode);
+        }
+        if (!graph.edgeExists(startNode, endNode)) {
             graph.link(startNode, endNode);
         }
     }
