@@ -10,6 +10,8 @@ public class Digraph {
     private String graphname;
     private ArrayList<Node> nodes = new ArrayList<>();
 
+    public static String STYLE_DASH = "dashed";
+
     public Digraph(String graphname) {
         this.graphname = graphname;
     }
@@ -23,6 +25,24 @@ public class Digraph {
         n.graph = this;
         nodes.add(n);
         return this;
+    }
+
+//    public void addNodeIfNotExists(String node) {
+//        if (!nodeExists(node)) {
+//            addNode(node);
+//        }
+//    }
+
+    public void addNodeAndEdge(String startNode, String endNode, String style) {
+        if (!nodeExists(startNode)) {
+            addNode(startNode);
+        }
+        if (!nodeExists(endNode)) {
+            addNode(endNode);
+        }
+        if (!edgeExists(startNode, endNode)) {
+            link(startNode, endNode, style);
+        }
     }
 
     public boolean nodeExists(String nodeID) {
@@ -63,7 +83,7 @@ public class Digraph {
         return n;
     }
 
-    public Node link(String parentNodeID, String childNodeID) {
+    public Node link(String parentNodeID, String childNodeID, String style) {
         Node parent = getNode(parentNodeID);
         if (parent == null) {
             System.out.print("JavaGraph: Node " + parentNodeID + " does not exist.");
@@ -74,12 +94,13 @@ public class Digraph {
             System.out.print("JavaGraph: Node " + childNodeID + " does not exist.");
             System.exit(0);
         }
+        child.style = style;
         parent.addChild(child);
         return child;
     }
 
-    public void link(String parentNodeID, String childNodeID, String linkLabel) {
-        link(parentNodeID, childNodeID).linkLabel = linkLabel;
+    public void link(String parentNodeID, String childNodeID, String linkLabel, String style) {
+        link(parentNodeID, childNodeID, style).linkLabel = linkLabel;
     }
 
     public void generate(String filename) {
@@ -95,10 +116,19 @@ public class Digraph {
             for (Node n : nodes) {
                 if (n.children.size() > 0) {
                     for (Node c : n.children) {
-                        if (c.hasLabel())
-                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\" [label=\"" + c.linkLabel + "\"];");
-                        else
-                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\";");
+                        StringBuilder output = new StringBuilder("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\"");
+                        if (c.hasLabel()) {
+                            output.append("[label=\"").append(c.linkLabel).append("\"]");
+                        }
+                        if (c.hasStyle()) {
+                            System.out.println(c.nodeName);
+                            output.append("[style=\"").append(c.style).append("\"]");
+                        }
+                        writer.println(output.append(";"));
+//                        if (c.hasLabel())
+//                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\" [label=\"" + c.linkLabel + "\"];");
+//                        else
+//                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\";");
                     }
                 }
             }
@@ -116,6 +146,7 @@ public class Digraph {
         private String nodeID;
         private String nodeName;
         private String linkLabel;
+        private String style;
         private ArrayList<Node> children = new ArrayList<>();
         private Digraph graph;
 
@@ -164,6 +195,10 @@ public class Digraph {
 
         public boolean hasLabel() {
             return (linkLabel != null);
+        }
+
+        public boolean hasStyle() {
+            return (style != null);
         }
     }
 }

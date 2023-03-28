@@ -67,7 +67,7 @@ public class App {
                     @Override
                     public void visit(ObjectCreationExpr o, Void arg) {
                         if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
-                            addNodeAndEdge(startNode, o.resolve().getName());
+                            graph.addNodeAndEdge(startNode, o.resolve().getName(), null);
                             if (o.getArguments().size() > 0) {
                                 for (Expression argument : o.getArguments()) {
                                     addArgumentDependence(argument, startNode);
@@ -78,6 +78,19 @@ public class App {
                 }.visit(cu, null);
                 // Identify all the method calls in the current declared method
                 new VoidVisitorAdapter<Void>() {
+
+//                    @Override
+//                    public void visit(ObjectCreationExpr o, Void arg) {
+//                        if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
+//                            graph.addNodeAndEdge(startNode, o.resolve().getName(), null);
+//                            if (o.getArguments().size() > 0) {
+//                                for (Expression argument : o.getArguments()) {
+//                                    addArgumentDependence(argument, startNode);
+//                                }
+//                            }
+//                        }
+//                    }
+
                     @Override
                     public void visit(MethodCallExpr m, Void arg) {
                         String methodCallClassMethod = Util.getLastSegment(m.resolve().getQualifiedName(), 2);
@@ -86,7 +99,7 @@ public class App {
                                 if (m.resolve().getQualifiedName().equals(lastMethod)) {
                                     return;
                                 }
-                                addNodeAndEdge(startNode, methodCallClassMethod);
+                                graph.addNodeAndEdge(startNode, methodCallClassMethod, null);
                                 // Data dependency in the arguments passed in method calls
                                 if (m.getArguments().size() > 0) {
                                     for (Expression argument : m.getArguments()) {
@@ -100,7 +113,7 @@ public class App {
                                 for (Expression argument : m.getArguments()) {
                                     if (argument instanceof MethodCallExpr) {
                                         String argumentMethodNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
-                                        addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode);
+                                        graph.addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode, null);
                                         m = (MethodCallExpr) argument;
                                         graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
                                     }
@@ -118,24 +131,28 @@ public class App {
     private static void handleInheritance() throws FileNotFoundException {
         for (File file : FILES) {
             cu = StaticJavaParser.parse(file);
-            new VoidVisitorAdapter<Void>() {
-                @Override
-                public void visit(ClassOrInterfaceDeclaration c, Void arg) {
-                    // inheritance of abstract class
-                    for (ClassOrInterfaceType type : c.getExtendedTypes()) {
-                        if (type.resolve().describe().contains(PACKAGE_NAME)) {
-                            addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
-                        }
-                    }
-                    // inheritance of interface
-                    for (ClassOrInterfaceType type : c.getImplementedTypes()) {
-                        if (type.resolve().describe().contains(PACKAGE_NAME)) {
-                            addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
-                        }
+            addClassDeclaration(cu);
+        }
+    }
+
+    private static void addClassDeclaration(CompilationUnit cu) {
+        new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(ClassOrInterfaceDeclaration c, Void arg) {
+                // inheritance of abstract class
+                for (ClassOrInterfaceType type : c.getExtendedTypes()) {
+                    if (type.resolve().describe().contains(PACKAGE_NAME)) {
+                        graph.addNodeAndEdge(c.getNameAsString(), type.getNameAsString(), Digraph.STYLE_DASH);
                     }
                 }
-            }.visit(cu, null);
-        }
+                // inheritance of interface
+                for (ClassOrInterfaceType type : c.getImplementedTypes()) {
+                    if (type.resolve().describe().contains(PACKAGE_NAME)) {
+                        graph.addNodeAndEdge(c.getNameAsString(), type.getNameAsString(), Digraph.STYLE_DASH);
+                    }
+                }
+            }
+        }.visit(cu, null);
     }
 
     private static File getEntry() throws FileNotFoundException {
@@ -162,17 +179,17 @@ public class App {
         throw new FileNotFoundException(String.format("Cannot find the class that has the method '%s'", ENTRY_NODE));
     }
 
-    private static void addNodeAndEdge(String startNode, String endNode) {
-        if (!graph.nodeExists(startNode)) {
-            graph.addNode(startNode);
-        }
-        if (!graph.nodeExists(endNode)) {
-            graph.addNode(endNode);
-        }
-        if (!graph.edgeExists(startNode, endNode)) {
-            graph.link(startNode, endNode);
-        }
-    }
+//    private static void addNodeAndEdge(String startNode, String endNode) {
+//        if (!graph.nodeExists(startNode)) {
+//            graph.addNode(startNode);
+//        }
+//        if (!graph.nodeExists(endNode)) {
+//            graph.addNode(endNode);
+//        }
+//        if (!graph.edgeExists(startNode, endNode)) {
+//            graph.link(startNode, endNode);
+//        }
+//    }
 
     private static void addArgumentDependence(Expression argument, String startNode) {
         String argumentNode;
@@ -190,7 +207,11 @@ public class App {
                 // If argument is an object reference
                 argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe(), 1);
             }
-            addNodeAndEdge(startNode, argumentNode);
+            graph.addNodeAndEdge(startNode, argumentNode, null);
         }
+    }
+
+    private static void addVariableDependence() {
+
     }
 }

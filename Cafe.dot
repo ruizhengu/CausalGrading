@@ -15,9 +15,9 @@ digraph Cafe {
 "RecipeNotFoundException" [label="RecipeNotFoundException"];
 "Order" [label="Order"];
 "Cafe.removeRecipe" [label="Cafe.removeRecipe"];
-"Recipe.getName" [label="Recipe.getName"];
 "Cafe.printMenu" [label="Cafe.printMenu"];
 "Cafe.greeting" [label="Cafe.greeting"];
+"Recipe.getName" [label="Recipe.getName"];
 "Recipe.getPrice" [label="Recipe.getPrice"];
 "Syrup" [label="Syrup"];
 "App.main" -> "Cafe";
@@ -28,17 +28,16 @@ digraph Cafe {
 "App.main" -> "Recipe.addIngredient";
 "App.main" -> "Cafe.addRecipe";
 "App.main" -> "Cafe.removeRecipe";
-"App.main" -> "Recipe.getName";
 "App.main" -> "Cafe.printMenu";
-"Coffee" -> "Ingredient";
-"Water" -> "Ingredient";
-"Milk" -> "Ingredient";
+"Coffee" -> "Ingredient"[style="dashed"];
+"Water" -> "Ingredient"[style="dashed"];
+"Milk" -> "Ingredient"[style="dashed"];
 "Recipe.addIngredient" -> "Coffee";
 "Recipe.addIngredient" -> "TooManyIngredientsException";
 "Recipe.addIngredient" -> "Ingredient.equals";
 "Recipe.addIngredient" -> "Water";
 "Recipe.addIngredient" -> "Milk";
-"Ingredient.equals" -> "Ingredient";
+"Ingredient.equals" -> "Ingredient"[style="dashed"];
 "Ingredient.equals" -> "Ingredient.getName";
 "Cafe.addRecipe" -> "Recipe";
 "Cafe.addRecipe" -> "CafeOutOfCapacityException";
@@ -48,7 +47,6 @@ digraph Cafe {
 "Cafe.removeRecipe" -> "RecipeNotFoundException";
 "Cafe.removeRecipe" -> "Order";
 "Cafe.removeRecipe" -> "Recipe";
-"Recipe.getName" -> "TooManyIngredientsException";
 "Cafe.printMenu" -> "CafeOutOfCapacityException";
 "Cafe.printMenu" -> "RecipeNotFoundException";
 "Cafe.printMenu" -> "Order";
@@ -56,5 +54,5 @@ digraph Cafe {
 "Cafe.printMenu" -> "Cafe.greeting";
 "Cafe.printMenu" -> "Recipe.getName";
 "Cafe.printMenu" -> "Recipe.getPrice";
-"Syrup" -> "Ingredient";
+"Syrup" -> "Ingredient"[style="dashed"];
 }
