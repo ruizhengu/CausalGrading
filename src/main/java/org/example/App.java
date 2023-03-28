@@ -121,11 +121,16 @@ public class App {
             new VoidVisitorAdapter<Void>() {
                 @Override
                 public void visit(ClassOrInterfaceDeclaration c, Void arg) {
-                    if (c.getExtendedTypes().size() > 0) {
-                        for (ClassOrInterfaceType type : c.getExtendedTypes()) {
-                            if (type.resolve().describe().contains(PACKAGE_NAME)) {
-                                addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
-                            }
+                    // inheritance of abstract class
+                    for (ClassOrInterfaceType type : c.getExtendedTypes()) {
+                        if (type.resolve().describe().contains(PACKAGE_NAME)) {
+                            addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
+                        }
+                    }
+                    // inheritance of interface
+                    for (ClassOrInterfaceType type : c.getImplementedTypes()) {
+                        if (type.resolve().describe().contains(PACKAGE_NAME)) {
+                            addNodeAndEdge(c.getNameAsString(), type.getNameAsString());
                         }
                     }
                 }
@@ -158,10 +163,11 @@ public class App {
     }
 
     private static void addNodeAndEdge(String startNode, String endNode) {
+        if (!graph.nodeExists(startNode)) {
+            graph.addNode(startNode);
+        }
         if (!graph.nodeExists(endNode)) {
             graph.addNode(endNode);
-        } else if (graph.nodeExists(endNode) && !graph.nodeExists(startNode)) {
-            graph.addNode(startNode);
         }
         if (!graph.edgeExists(startNode, endNode)) {
             graph.link(startNode, endNode);
