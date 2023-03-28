@@ -33,6 +33,10 @@ public class Digraph {
         }
     }
 
+    public void addNodeAndEdge(String startNode, String endNode) {
+        addNodeAndEdge(startNode, endNode, null);
+    }
+
     public void addNodeAndEdge(String startNode, String endNode, String style) {
         if (!nodeExists(startNode)) {
             addNode(startNode);
@@ -83,6 +87,10 @@ public class Digraph {
         return n;
     }
 
+//    public Node link(String parentNodeID, String childNodeID) {
+//        return link(parentNodeID, childNodeID, null);
+//    }
+
     public Node link(String parentNodeID, String childNodeID, String style) {
         Node parent = getNode(parentNodeID);
         if (parent == null) {
@@ -98,6 +106,7 @@ public class Digraph {
         parent.addChild(child);
         return child;
     }
+
 
     public void link(String parentNodeID, String childNodeID, String linkLabel, String style) {
         link(parentNodeID, childNodeID, style).linkLabel = linkLabel;
