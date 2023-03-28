@@ -48,7 +48,7 @@ public class App {
         File entry = getEntry();
         graph.addNode(ENTRY_NODE);
         graphBuild(entry, ENTRY_NODE, null);
-        handleInheritance();
+        buildSkeletonGraph();
         graph.generate("Cafe.dot");
     }
 
@@ -128,13 +128,28 @@ public class App {
         }.visit(cu, null);
     }
 
-    private static void handleInheritance() throws FileNotFoundException {
+    private static void buildSkeletonGraph() throws FileNotFoundException {
         for (File file : FILES) {
             cu = StaticJavaParser.parse(file);
             addClassDeclaration(cu);
+            addMethodDeclaration(cu);
         }
     }
 
+    private static void addMethodDeclaration(CompilationUnit cu) {
+        new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(MethodDeclaration m, Void arg) {
+                graph.addNodeIfNotExists(String.join(".", m.resolve().getClassName(), m.resolve().getName()));
+            }
+        }.visit(cu, null);
+    }
+
+    /**
+     * Add the classes which extend or implement abstract classes or interfaces
+     *
+     * @param cu The CompilationUnit of the file under analysis
+     */
     private static void addClassDeclaration(CompilationUnit cu) {
         new VoidVisitorAdapter<Void>() {
             @Override

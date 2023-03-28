@@ -27,11 +27,11 @@ public class Digraph {
         return this;
     }
 
-//    public void addNodeIfNotExists(String node) {
-//        if (!nodeExists(node)) {
-//            addNode(node);
-//        }
-//    }
+    public void addNodeIfNotExists(String node) {
+        if (!nodeExists(node)) {
+            addNode(node);
+        }
+    }
 
     public void addNodeAndEdge(String startNode, String endNode, String style) {
         if (!nodeExists(startNode)) {
@@ -121,14 +121,9 @@ public class Digraph {
                             output.append("[label=\"").append(c.linkLabel).append("\"]");
                         }
                         if (c.hasStyle()) {
-                            System.out.println(c.nodeName);
                             output.append("[style=\"").append(c.style).append("\"]");
                         }
                         writer.println(output.append(";"));
-//                        if (c.hasLabel())
-//                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\" [label=\"" + c.linkLabel + "\"];");
-//                        else
-//                            writer.println("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\";");
                     }
                 }
             }
