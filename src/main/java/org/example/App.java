@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -51,163 +52,46 @@ public class App {
 //        File entry = getEntry();
 //        graph.addNode(ENTRY_NODE);
 //        graphBuild(entry, ENTRY_NODE, null);
-        buildSkeletonGraph();
+        buildGraph();
         graph.generate("Cafe.dot");
     }
 
-//    private static void graphBuild(File file, String startNode, String lastMethod) throws FileNotFoundException {
-//        cu = StaticJavaParser.parse(file);
-//        // Identify all the method declarations in the file
-//        new VoidVisitorAdapter<Void>() {
-//            @Override
-//            public void visit(MethodDeclaration n, Void arg) {
-//                String methodDeclarationClassMethod = Util.getLastSegment(n.resolve().getQualifiedName(), 2);
-//                if (!methodDeclarationClassMethod.equals(startNode)) {
-//                    return;
-//                }
-//                // Check data dependency in object creations
-//                new VoidVisitorAdapter<Void>() {
-//                    @Override
-//                    public void visit(ObjectCreationExpr o, Void arg) {
-//                        if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
-//                            graph.addNodeAndEdge(startNode, o.resolve().getName(), null);
-//                            if (o.getArguments().size() > 0) {
-//                                for (Expression argument : o.getArguments()) {
-//                                    addArgumentDependence(argument, startNode);
-//                                }
-//                            }
-//                        }
-//                    }
-//                }.visit(cu, null);
-//                // Identify all the method calls in the current declared method
-//                new VoidVisitorAdapter<Void>() {
-//
-////                    @Override
-////                    public void visit(ObjectCreationExpr o, Void arg) {
-////                        if (o.resolve().getPackageName().contains(PACKAGE_NAME)) {
-////                            graph.addNodeAndEdge(startNode, o.resolve().getName(), null);
-////                            if (o.getArguments().size() > 0) {
-////                                for (Expression argument : o.getArguments()) {
-////                                    addArgumentDependence(argument, startNode);
-////                                }
-////                            }
-////                        }
-////                    }
-//
-//                    @Override
-//                    public void visit(MethodCallExpr m, Void arg) {
-//                        String methodCallClassMethod = Util.getLastSegment(m.resolve().getQualifiedName(), 2);
-//                        try {
-//                            if (m.resolve().getPackageName().contains(PACKAGE_NAME)) {
-//                                if (m.resolve().getQualifiedName().equals(lastMethod)) {
-//                                    return;
-//                                }
-//                                graph.addNodeAndEdge(startNode, methodCallClassMethod, null);
-//                                // Data dependency in the arguments passed in method calls
-//                                if (m.getArguments().size() > 0) {
-//                                    for (Expression argument : m.getArguments()) {
-//                                        addArgumentDependence(argument, methodCallClassMethod);
-//                                    }
-//                                }
-//                                graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
-//                            }
-//                            // If the arguments are method calls
-//                            else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-//                                for (Expression argument : m.getArguments()) {
-//                                    if (argument instanceof MethodCallExpr) {
-//                                        String argumentMethodNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
-//                                        graph.addNodeAndEdge(methodDeclarationClassMethod, argumentMethodNode, null);
-//                                        m = (MethodCallExpr) argument;
-//                                        graphBuild(Util.getFileOfMethod(m), methodCallClassMethod, m.resolve().getQualifiedName());
-//                                    }
-//                                }
-//                            }
-//                        } catch (FileNotFoundException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    }
-//                }.visit(n, null);
-//            }
-//        }.visit(cu, null);
-//    }
 
-    private static void buildSkeletonGraph() throws FileNotFoundException {
+    private static void buildGraph() throws FileNotFoundException {
         for (File file : FILES) {
             cu = StaticJavaParser.parse(file);
             addClassDeclaration(cu);
-            ArrayList<MethodDeclaration> methods = addMethodDeclaration(cu);
-            for (MethodDeclaration method : methods) {
-                handleMethodCalls(method);
-            }
+            addMethods(cu);
         }
     }
 
-    private static void handleMethodCalls(MethodDeclaration m) {
-        new VoidVisitorAdapter<Void>() {
-            @Override
-            public void visit(MethodCallExpr n, Void arg) {
-                String startNode = String.join(".", m.resolve().getClassName(), m.getNameAsString());
-                String endNode = String.join(".", n.resolve().getClassName(), n.getNameAsString());
-                if (n.resolve().getQualifiedName().contains(PACKAGE_NAME)) {
-                    graph.addNodeAndEdge(startNode, endNode);
-                } else if (n.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-                    for (Expression argument : n.getArguments()) {
-                        if (argument instanceof MethodCallExpr expr) {
-                            String argumentNode = String.join(".", expr.resolve().getClassName(), expr.getNameAsString());
-                            graph.addNodeAndEdge(startNode, argumentNode);
-                        }
-                    }
-                }
-            }
-        }.visit(m, null);
-    }
-
-//    private static void handleMethodCalls(File file, String startNode, String lastMethod) throws FileNotFoundException {
-//        cu = StaticJavaParser.parse(file);
-//        new VoidVisitorAdapter<Void>() {
-//            String endNode;
-//
-//            @Override
-//            public void visit(MethodCallExpr m, Void arg) {
-//                try {
-////                    System.out.println("start node: " + startNode);
-////                    System.out.println("end node: " + endNode);
-//                    endNode = String.join(".", m.resolve().getClassName(), m.resolve().getName());
-//                    if (startNode.equals(endNode)) {
-//                        return;
-//                    }
-//                    if (m.resolve().getQualifiedName().contains(PACKAGE_NAME)) {
-//                        graph.addNodeAndEdge(startNode, endNode);
-//                        handleMethodCalls(Util.getFileOfMethod(m), endNode, m.resolve().getQualifiedName());
-//                    }
-//                    // If one of the arguments of a method call is a method call
-////                    else if (m.getArguments().stream().anyMatch(a -> a instanceof MethodCallExpr)) {
-////                        for (Expression argument : m.getArguments()) {
-////                            if (argument instanceof MethodCallExpr expr) {
-////                                endNode = String.join(".", expr.resolve().getClassName(), expr.getNameAsString());
-////                                graph.addNodeAndEdge(startNode, endNode);
-////                                System.out.println(expr.getName());
-////                                handleMethodCalls(Util.getFileOfMethod(expr), endNode, expr.resolve().getQualifiedName());
-////                            }
-////                        }
-////                    }
-//                } catch (FileNotFoundException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        }.visit(cu, null);
-//    }
-
-    private static ArrayList<MethodDeclaration> addMethodDeclaration(CompilationUnit cu) {
-        ArrayList<MethodDeclaration> methods = new ArrayList<>();
+    private static void addMethods(CompilationUnit cu) {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
                 graph.addNodeIfNotExists(String.join(".", m.resolve().getClassName(), m.getNameAsString()));
-                methods.add(m);
+                new VoidVisitorAdapter<Void>() {
+                    @Override
+                    public void visit(MethodCallExpr n, Void arg) {
+                        String callerNode = String.join(".", m.resolve().getClassName(), m.getNameAsString());
+                        String calleeNode = String.join(".", n.resolve().getClassName(), n.getNameAsString());
+                        // If the method call belongs to a class in the project
+                        if (n.resolve().getQualifiedName().contains(PACKAGE_NAME)) {
+                            graph.addNodeAndEdge(callerNode, calleeNode);
+                            for (Expression argument : n.getArguments()) {
+                                addArgumentDependence(argument, calleeNode);
+                            }
+                        }
+                        // If one of the arguments passed to a method is a method call, an object creation, an instance variable or an object reference
+                        else if (n.getArguments().stream().anyMatch(App::checkDependence)) {
+                            for (Expression argument : n.getArguments()) {
+                                addArgumentDependence(argument, calleeNode);
+                            }
+                        }
+                    }
+                }.visit(m, null);
             }
         }.visit(cu, null);
-        return methods;
     }
 
     /**
@@ -235,51 +119,41 @@ public class App {
         }.visit(cu, null);
     }
 
-    private static File getEntry() throws FileNotFoundException {
-        for (File file : FILES) {
-            cu = StaticJavaParser.parse(file);
-            String entry_class = new GenericVisitorAdapter<String, Void>() {
-                @Override
-                public String visit(ClassOrInterfaceDeclaration n, Void arg) {
-                    super.visit(n, arg);
-                    for (MethodDeclaration method : n.getMethods()) {
-                        if (String.valueOf(method.getName()).equals("main")) {
-                            return String.valueOf(n.getName());
-                        }
-                    }
-                    return null;
-                }
-            }.visit(cu, null);
-            Pattern pattern = Pattern.compile(String.format(".*/%s.java", entry_class));
-            Matcher matcher = pattern.matcher(file.toString());
-            if (matcher.find()) {
-                return file;
-            }
-        }
-        throw new FileNotFoundException(String.format("Cannot find the class that has the method '%s'", ENTRY_NODE));
-    }
-
     private static void addArgumentDependence(Expression argument, String startNode) {
         String argumentNode;
         if (argument.calculateResolvedType().describe().contains(PACKAGE_NAME)) {
-            if (argument instanceof MethodCallExpr) {
+            System.out.println(argument);
+            if (argument instanceof MethodCallExpr expr) {
                 // If argument is a method call expression
-                argumentNode = Util.getLastSegment(((MethodCallExpr) argument).resolve().getQualifiedName(), 2);
+                argumentNode = String.join(".", expr.resolve().getClassName(), expr.getNameAsString());
             } else if (argument.isObjectCreationExpr()) {
                 // If argument is a new object creation expression
-                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe());
+                argumentNode = argument.asObjectCreationExpr().resolve().getClassName();
             } else if (argument.isFieldAccessExpr()) {
                 // If argument is an instance variable
+                FieldAccessExpr expr = argument.asFieldAccessExpr();
+                System.out.println("isFieldAccessExpr: " + expr.getName());
                 argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe(), 2, 1);
             } else {
                 // If argument is an object reference
-                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe(), 1);
+                argumentNode = Util.getLastSegment(argument.calculateResolvedType().describe());
             }
             graph.addNodeAndEdge(startNode, argumentNode, null);
         }
     }
 
+    private static boolean checkDependence(Expression argument) {
+        if (argument instanceof MethodCallExpr) return true;
+        else if (argument.isObjectCreationExpr()) return true;
+        else if (argument.isFieldAccessExpr()) return true;
+        else return argument.isNameExpr();
+    }
+
     private static void addVariableDependence() {
+
+    }
+
+    private static void addObjectCreation() {
 
     }
 }
