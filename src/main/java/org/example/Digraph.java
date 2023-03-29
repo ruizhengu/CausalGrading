@@ -10,7 +10,8 @@ public class Digraph {
     private String graphname;
     private ArrayList<Node> nodes = new ArrayList<>();
 
-    public static String STYLE_DASH = "dashed";
+    public static String STYLE_CLASS = "dashed";
+    public static String STYLE_DATA = "dotted";
 
     public Digraph(String graphname) {
         this.graphname = graphname;
