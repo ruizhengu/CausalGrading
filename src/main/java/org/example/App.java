@@ -59,11 +59,13 @@ public class App {
             cu = StaticJavaParser.parse(file);
             addClasses(cu);
         }
+        System.out.println(dependency);
         // Construct call graph and data dependency graph
         for (File file : files) {
             cu = StaticJavaParser.parse(file);
             addMethods(cu);
         }
+        System.out.println(dependency);
     }
 
     private static void addMethods(CompilationUnit cu) {
@@ -92,7 +94,19 @@ public class App {
 
                     @Override
                     public void visit(AssignExpr v, Void arg) {
-                        System.out.println("Variable Assign: " + v.getTarget());
+//                        System.out.println("Variable Assign: " + v.getTarget());
+                        String key = v.getTarget().toString();
+//                        String value = null;
+//                        System.out.println(v.getTarget() instanceof ArrayAccessExpr);
+                        if (v.getTarget() instanceof ArrayAccessExpr) {
+//                            System.out.println(v.getTarget().asArrayAccessExpr().getName());
+                            key = v.getTarget().asArrayAccessExpr().getName().toString();
+                        }
+                        if (dependency.has(key)) {
+                            JSONObject tmp = dependency.getJSONObject(key);
+                            tmp.append(ASSIGN_KEY, callerNode);
+                            dependency.put(key, tmp);
+                        }
                     }
 
 //                    @Override
