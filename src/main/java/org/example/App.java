@@ -55,7 +55,7 @@ public class App {
 
     private static void buildGraph(Set<File> files) throws FileNotFoundException {
         // Get all the object fields
-        for (File file: files) {
+        for (File file : files) {
             cu = StaticJavaParser.parse(file);
             addClasses(cu);
         }
@@ -91,17 +91,25 @@ public class App {
                         }
                     }
 
-
                     @Override
                     public void visit(AssignExpr v, Void arg) {
-//                        System.out.println("Variable Assign: " + v.getTarget());
                         String key = v.getTarget().toString();
-//                        String value = null;
-//                        System.out.println(v.getTarget() instanceof ArrayAccessExpr);
                         if (v.getTarget() instanceof ArrayAccessExpr) {
-//                            System.out.println(v.getTarget().asArrayAccessExpr().getName());
                             key = v.getTarget().asArrayAccessExpr().getName().toString();
                         }
+                        if (v.getTarget() instanceof FieldAccessExpr) {
+                            key = v.getTarget().asFieldAccessExpr().getNameAsString();
+                        }
+                        if (dependency.has(key)) {
+                            JSONObject tmp = dependency.getJSONObject(key);
+                            tmp.append(ASSIGN_KEY, callerNode);
+                            dependency.put(key, tmp);
+                        }
+                    }
+
+                    @Override
+                    public void visit(UnaryExpr u, Void arg) {
+                        String key = u.getExpression().toString();
                         if (dependency.has(key)) {
                             JSONObject tmp = dependency.getJSONObject(key);
                             tmp.append(ASSIGN_KEY, callerNode);
