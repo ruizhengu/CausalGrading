@@ -116,4 +116,12 @@ public class Util {
         }
         return output.toString();
     }
+
+    public static void appendDependency(JSONObject dependency, String dependencyKey, String appendKey, String appendValue) {
+        if (dependency.has(dependencyKey)) {
+            JSONObject tmp = dependency.getJSONObject(dependencyKey);
+            tmp.append(appendKey, appendValue);
+            dependency.put(dependencyKey, tmp);
+        }
+    }
 }

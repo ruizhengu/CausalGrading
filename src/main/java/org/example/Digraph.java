@@ -1,5 +1,7 @@
 package org.example;
 
+import org.json.JSONObject;
+
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -145,6 +147,9 @@ public class Digraph {
         } catch (UnsupportedEncodingException e) {
             System.out.print("JavaGraph: " + e.getMessage());
         }
+    }
+    public void linkDependency(JSONObject dependency) {
+
     }
 
     class Node {

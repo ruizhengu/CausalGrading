@@ -73,7 +73,6 @@ public class App {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
                 String callerNode = String.join(".", m.resolve().getClassName(), m.getNameAsString());
-//                System.out.println(callerNode);
                 graph.addNodeIfNotExists(callerNode);
                 new VoidVisitorAdapter<Void>() {
                     @Override
@@ -85,42 +84,80 @@ public class App {
                         }
                         // If one of the arguments passed to a method is a method call
                         for (Expression argument : n.getArguments()) {
-                            if (argument instanceof MethodCallExpr) {
+                            if (argument.isMethodCallExpr()) {
                                 addArgumentDependence(argument.asMethodCallExpr(), callerNode);
                             }
                         }
                     }
 
+                    /** Record the method name if an object field variable is assigned in this method
+                     * @param v ignore
+                     * @param arg ignore
+                     */
                     @Override
                     public void visit(AssignExpr v, Void arg) {
                         String key = v.getTarget().toString();
-                        if (v.getTarget() instanceof ArrayAccessExpr) {
+                        if (v.getTarget().isArrayAccessExpr()) {
                             key = v.getTarget().asArrayAccessExpr().getName().toString();
-                        }
-                        if (v.getTarget() instanceof FieldAccessExpr) {
+                        } else if (v.getTarget().isFieldAccessExpr()) {
                             key = v.getTarget().asFieldAccessExpr().getNameAsString();
+                        } else {
+                            System.out.println("Ignored Assign Expression: " + v);
                         }
-                        if (dependency.has(key)) {
-                            JSONObject tmp = dependency.getJSONObject(key);
-                            tmp.append(ASSIGN_KEY, callerNode);
-                            dependency.put(key, tmp);
-                        }
+                        Util.appendDependency(dependency, key, ASSIGN_KEY, callerNode);
                     }
 
+                    /** Record the method name if an object field is increased or decreased
+                     *  e.g. nRecipes++;
+                     * @param u ignore
+                     * @param arg ignore
+                     */
                     @Override
                     public void visit(UnaryExpr u, Void arg) {
                         String key = u.getExpression().toString();
-                        if (dependency.has(key)) {
-                            JSONObject tmp = dependency.getJSONObject(key);
-                            tmp.append(ASSIGN_KEY, callerNode);
-                            dependency.put(key, tmp);
+                        Util.appendDependency(dependency, key, ASSIGN_KEY, callerNode);
+                    }
+
+                    /**
+                     * Record the method name if an object field variable is accessed in this method
+                     * @param f ignore
+                     * @param arg ignore
+                     */
+                    @Override
+                    public void visit(FieldAccessExpr f, Void arg) {
+                        String key = f.getScope().toString();
+                        if (dependency.has(f.getScope().toString())) {
+                            // If the scope of a Field Access Expression is identified object field variable
+                            if (dependency.getJSONObject(key).get(CLASS_KEY).toString().equals(m.resolve().getClassName())) {
+                                Util.appendDependency(dependency, key, ACCESS_KEY, callerNode);
+                            }
+                        } else if (dependency.has(f.getNameAsString())) {
+                            key = f.getNameAsString();
+                            // If is This Expression (e.g. int a = this.age;)
+                            if (f.getScope().isThisExpr()) {
+                                Util.appendDependency(dependency, key, ACCESS_KEY, callerNode);
+                            }
+                        } else {
+                            System.out.println("Ignored Field Access Expression: " + f);
                         }
                     }
 
-//                    @Override
-//                    public void visit(FieldAccessExpr f, Void arg) {
-//                        System.out.println("Field Access: " + f.getName());
-//                    }
+
+                    /**Check if an object field variable is assigned to a local variable
+                     *
+                     * @param n
+                     * @param arg
+                     */
+                    public void visit(NameExpr n, Void arg) {
+                    }
+
+                    /**Check if a variable is declared by an object field variable
+                     *
+                     * @param v
+                     * @param arg
+                     */
+                    public void visit(VariableDeclarationExpr v, Void arg) {
+                    }
 
                     // Object creations in the class
 //                    @Override
@@ -163,7 +200,7 @@ public class App {
 //                    }
 //                }
 
-                // Add the fields and their classed in JSON object
+                // Record all the object field variables(and their classes)
                 for (ResolvedFieldDeclaration field : c.resolve().getAllFields()) {
                     JSONObject desc = new JSONObject();
                     desc.put(CLASS_KEY, c.getName());
