@@ -37,6 +37,7 @@ digraph Cafe {
 "Cafe.greeting" -> "Cafe.getName";
 "Cafe.printPendingOrders" -> "Order.toString";
 "Order.toString" -> "Recipe.getName";
+"Cafe.placeOrder" -> "Cafe.findRecipe";
 "Cafe.placeOrder" -> "Recipe.getPrice";
 "Cafe.serveOrder" -> "Order.serve";
 "Order.printReceipt" -> "Recipe.getName";

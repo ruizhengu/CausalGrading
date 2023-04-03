@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 public class Util {
 
     public static Set<File> files = new HashSet<>();
+    public static String PACKAGE_NAME = "uk.ac.sheffield.com1003.cafe";
 
     /**
      * Get the project path by the current OS
@@ -115,13 +116,5 @@ public class Util {
             output.append(".").append(splits[splits.length - length + i]);
         }
         return output.toString();
-    }
-
-    public static void appendDependency(JSONObject dependency, String dependencyKey, String appendKey, String appendValue) {
-        if (dependency.has(dependencyKey)) {
-            JSONObject tmp = dependency.getJSONObject(dependencyKey);
-            tmp.append(appendKey, appendValue);
-            dependency.put(dependencyKey, tmp);
-        }
     }
 }
