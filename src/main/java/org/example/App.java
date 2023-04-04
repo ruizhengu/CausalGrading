@@ -66,9 +66,7 @@ public class App {
         System.out.println(dataDependence.getDependence());
     }
 
-    public static void getTrace() {
 
-    }
 
     /**
      * Add the classes which extend or implement abstract classes or interfaces

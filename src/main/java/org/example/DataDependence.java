@@ -8,6 +8,12 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
 public class DataDependence {
 
     public static JSONObject dependence = new JSONObject();
@@ -15,6 +21,18 @@ public class DataDependence {
     public static String ASSIGN_KEY = "assign";
     public static String ACCESS_KEY = "access";
 
+    public static void getTrace() throws FileNotFoundException {
+        File log = new File("/home/ruizhen/Projects/CausalGrading/src/main/java/org/example/aspect/log.txt");
+        List<String> executionTrace = new ArrayList<>();
+        Scanner scanner = new Scanner(log);
+        while (scanner.hasNextLine()) {
+            String method = scanner.nextLine();
+            if (!executionTrace.contains(method)) {
+                executionTrace.add(method);
+            }
+        }
+        scanner.close();
+    }
 
     public void addObjectFields(CompilationUnit cu) {
         new VoidVisitorAdapter<Void>() {

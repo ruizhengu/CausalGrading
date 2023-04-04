@@ -2,7 +2,6 @@ digraph Cafe {
 "App.main" [label="App.main"];
 "Recipe.addIngredient" [label="Recipe.addIngredient"];
 "Cafe.addRecipe" [label="Cafe.addRecipe"];
-"Recipe.getName" [label="Recipe.getName"];
 "Cafe.printMenu" [label="Cafe.printMenu"];
 "Syrup.toString" [label="Syrup.toString"];
 "Ingredient.getName" [label="Ingredient.getName"];
@@ -10,6 +9,7 @@ digraph Cafe {
 "Ingredient.getAmount" [label="Ingredient.getAmount"];
 "Ingredient.toString" [label="Ingredient.toString"];
 "Ingredient.equals" [label="Ingredient.equals"];
+"Recipe.getName" [label="Recipe.getName"];
 "Recipe.getPrice" [label="Recipe.getPrice"];
 "Recipe.isReady" [label="Recipe.isReady"];
 "Water.toString" [label="Water.toString"];
@@ -28,7 +28,6 @@ digraph Cafe {
 "Order.printReceipt" [label="Order.printReceipt"];
 "App.main" -> "Recipe.addIngredient";
 "App.main" -> "Cafe.addRecipe";
-"App.main" -> "Recipe.getName";
 "App.main" -> "Cafe.printMenu";
 "Recipe.addIngredient" -> "Ingredient.equals";
 "Cafe.printMenu" -> "Recipe.getName";

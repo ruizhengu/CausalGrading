@@ -14,23 +14,14 @@ public class MethodCallTrace {
         writer = new FileWriter("log.txt");
     }
 
-    @After("execution(* uk.ac.sheffield.com1003.cafe.*.*(..))")
+    @Pointcut("execution(* uk.ac.sheffield.com1003.cafe.*.*(..)) || execution(* uk.ac.sheffield.com1003.cafe.*.*.*(..))")
+    public void recordExecution() {
+    }
+
+    @Before("recordExecution()")
     public void logMethodExecution(JoinPoint joinPoint) throws Throwable {
-        String methodName = joinPoint.getSignature().getName();
-        writer.write("Method executed: " + methodName + "\n");
+        String methodName = String.join(".", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName());
+        writer.write(methodName + "\n");
         writer.flush();
     }
-
-    @AfterThrowing(pointcut = "execution(* uk.ac.sheffield.com1003.cafe.*.*(..))", throwing = "ex")
-    public void logMethodException(JoinPoint joinPoint, Throwable ex) throws Throwable {
-        String methodName = joinPoint.getSignature().getName();
-        writer.write("Exception thrown in method: " + methodName + " - " + ex.getMessage() + "\n");
-        writer.flush();
-    }
-
-//    @After("execution(* uk.ac.sheffield.com1003.cafe.*.*(..))")
-//    public void closeLogFile() throws Throwable {
-//        writer.close();
-//    }
-
 }
