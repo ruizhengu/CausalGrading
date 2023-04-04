@@ -63,6 +63,8 @@ public class App {
             MethodCall.addMethodCalls(cu, graph);
             dataDependence.addDataDependence(cu);
         }
+        // Add data dependence in the method call graph
+        dataDependence.buildGraph(graph);
         System.out.println(dataDependence.getDependence());
     }
 

@@ -6,11 +6,13 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import com.google.common.graph.Graph;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -21,17 +23,19 @@ public class DataDependence {
     public static String ASSIGN_KEY = "assign";
     public static String ACCESS_KEY = "access";
 
-    public static void getTrace() throws FileNotFoundException {
+    public static List<String> getTrace() throws FileNotFoundException {
         File log = new File("/home/ruizhen/Projects/CausalGrading/src/main/java/org/example/aspect/log.txt");
         List<String> executionTrace = new ArrayList<>();
         Scanner scanner = new Scanner(log);
         while (scanner.hasNextLine()) {
             String method = scanner.nextLine();
             if (!executionTrace.contains(method)) {
-                executionTrace.add(method);
+                executionTrace.add(Util.getLastSegment(method, 2));
             }
         }
+        System.out.println(executionTrace);
         scanner.close();
+        return executionTrace;
     }
 
     public void addObjectFields(CompilationUnit cu) {
@@ -135,7 +139,30 @@ public class DataDependence {
         }
     }
 
-    public void buildGraph() {
+    /**
+     * Connect the method nodes with data dependence
+     *
+     * @param graph The Digraph object
+     */
+    public void buildGraph(Digraph graph) throws FileNotFoundException {
+        List<String> trace = getTrace();
+        Iterator<String> keys = dependence.keys();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            JSONObject tmp = dependence.getJSONObject(key);
+            if (tmp.has(ASSIGN_KEY) && tmp.has(ACCESS_KEY)) {
+                for (Object methodAssign : tmp.getJSONArray(ASSIGN_KEY)) {
+                    int indexAssign = trace.indexOf(methodAssign.toString());
+                    for (Object methodAccess : tmp.getJSONArray(ACCESS_KEY)) {
+                        int indexAccess = trace.indexOf(methodAccess.toString());
+                        if (indexAssign > -1 && indexAccess > -1 && indexAccess > indexAssign) {
+                            graph.addNodeAndEdge(methodAssign.toString(), methodAccess.toString(), Digraph.STYLE_DATA);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public JSONObject getDependence() {

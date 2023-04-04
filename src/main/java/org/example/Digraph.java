@@ -20,10 +20,6 @@ public class Digraph {
     }
 
     public Digraph addNode(String nodeID) {
-        if (nodeExists(nodeID)) {
-            System.out.println("Error: Node " + nodeID + " already exists.");
-            System.exit(0);
-        }
         Node n = new Node(nodeID);
         n.graph = this;
         nodes.add(n);
@@ -64,10 +60,7 @@ public class Digraph {
     public boolean edgeExists(String parentNodeID, String childNodeID) {
         Node parent = getNode(parentNodeID);
         ArrayList<Node> children = parent.getChildren();
-        if (children.contains(getNode(childNodeID))) {
-            return true;
-        }
-        return false;
+        return children.contains(getNode(childNodeID));
     }
 
     public Node getNode(String nodeID) {
@@ -90,10 +83,6 @@ public class Digraph {
         return n;
     }
 
-//    public Node link(String parentNodeID, String childNodeID) {
-//        return link(parentNodeID, childNodeID, null);
-//    }
-
     public Node link(String parentNodeID, String childNodeID, String style) {
         Node parent = getNode(parentNodeID);
         if (parent == null) {
@@ -105,11 +94,10 @@ public class Digraph {
             System.out.print("JavaGraph: Node " + childNodeID + " does not exist.");
             System.exit(0);
         }
-        child.style = style;
+        parent.style = style;
         parent.addChild(child);
         return child;
     }
-
 
     public void link(String parentNodeID, String childNodeID, String linkLabel, String style) {
         link(parentNodeID, childNodeID, style).linkLabel = linkLabel;
@@ -132,8 +120,8 @@ public class Digraph {
                         if (c.hasLabel()) {
                             output.append("[label=\"").append(c.linkLabel).append("\"]");
                         }
-                        if (c.hasStyle()) {
-                            output.append("[style=\"").append(c.style).append("\"]");
+                        if (n.hasStyle()) {
+                            output.append("[style=\"").append(n.style).append("\"]");
                         }
                         writer.println(output.append(";"));
                     }
@@ -147,9 +135,6 @@ public class Digraph {
         } catch (UnsupportedEncodingException e) {
             System.out.print("JavaGraph: " + e.getMessage());
         }
-    }
-    public void linkDependency(JSONObject dependency) {
-
     }
 
     class Node {
