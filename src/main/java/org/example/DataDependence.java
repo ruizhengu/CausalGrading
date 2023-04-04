@@ -3,9 +3,12 @@ package org.example;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.graph.Graph;
 import org.json.JSONObject;
 
@@ -55,6 +58,7 @@ public class DataDependence {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
+                String className = m.resolve().getClassName();
                 String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
                 new VoidVisitorAdapter<Void>() {
                     /** Record the method name if an object field variable is assigned in this method
@@ -63,15 +67,20 @@ public class DataDependence {
                      */
                     @Override
                     public void visit(AssignExpr a, Void arg) {
-                        String key = a.getTarget().toString();
+                        String key;
                         if (a.getTarget().isArrayAccessExpr()) {
                             key = a.getTarget().asArrayAccessExpr().getName().toString();
+                            appendDependence(key, ASSIGN_KEY, methodName);
                         } else if (a.getTarget().isFieldAccessExpr()) {
                             key = a.getTarget().asFieldAccessExpr().getNameAsString();
+                            appendDependence(key, ASSIGN_KEY, methodName);
                         } else {
-                            System.out.println("Ignored Assign Expression: " + a);
+                            // if a local variable is assigned by an object field variable
+                            String value = a.getValue().toString();
+                            if (dependence.has(value) && dependence.getJSONObject(value).get(CLASS_KEY).toString().equals(className)) {
+                                appendDependence(value, ACCESS_KEY, methodName);
+                            }
                         }
-                        appendDependence(key, ASSIGN_KEY, methodName);
                     }
 
                     /** Record the method name if an object field is increased or decreased
@@ -93,11 +102,10 @@ public class DataDependence {
                     @Override
                     public void visit(FieldAccessExpr f, Void arg) {
                         String key = f.getScope().toString();
-                        if (dependence.has(f.getScope().toString())) {
+                        if (dependence.has(key)) {
                             // If the scope of a Field Access Expression is identified object field variable
                             if (dependence.getJSONObject(key).get(CLASS_KEY).toString().equals(m.resolve().getClassName())) {
                                 appendDependence(key, ACCESS_KEY, methodName);
-
                             }
                         } else if (dependence.has(f.getNameAsString())) {
                             key = f.getNameAsString();
@@ -110,20 +118,23 @@ public class DataDependence {
                         }
                     }
 
-                    /**Check if an object field variable is assigned to a local variable
-                     *
-                     * @param n ignore
-                     * @param arg ignore
-                     */
-                    public void visit(NameExpr n, Void arg) {
-                    }
-
-                    /**Check if a variable is declared by an object field variable
+                    /**Check if the value assigned to a local variable when it's declared is an object field variable
                      *
                      * @param v ignore
                      * @param arg ignore
                      */
                     public void visit(VariableDeclarationExpr v, Void arg) {
+                        for (VariableDeclarator variable : v.getVariables()) {
+                            if (variable.getInitializer().isPresent()) {
+                                String value = variable.getInitializer().get().toString();
+
+                                if (dependence.has(value)) {
+                                    if (dependence.getJSONObject(value).get(CLASS_KEY).toString().equals(m.resolve().getClassName())) {
+                                        appendDependence(value, ASSIGN_KEY, methodName);
+                                    }
+                                }
+                            }
+                        }
                     }
 
                 }.visit(m, null);
