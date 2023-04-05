@@ -25,7 +25,7 @@ public class MethodCall {
                         // If one of the arguments passed to a method is a method call
                         for (Expression argument : n.getArguments()) {
                             if (argument.isMethodCallExpr()) {
-                                Argument.addArgumentDependence(argument, graph, callerNode);
+                                Argument.addArgumentMethodCall(argument, graph, callerNode);
                             }
                         }
                     }

@@ -7,9 +7,6 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
-import com.github.javaparser.resolution.types.ResolvedType;
-import com.google.common.graph.Graph;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -23,7 +20,9 @@ public class DataDependence {
 
     public static JSONObject dependence = new JSONObject();
     public static String CLASS_KEY = "class";
+    // When an object field variable is assigned/updated
     public static String ASSIGN_KEY = "assign";
+    // When an object field variable is accessed/used
     public static String ACCESS_KEY = "access";
 
     public static List<String> getTrace() throws FileNotFoundException {
@@ -36,11 +35,16 @@ public class DataDependence {
                 executionTrace.add(Util.getLastSegment(method, 2));
             }
         }
-        System.out.println(executionTrace);
+//        System.out.println(executionTrace);
         scanner.close();
         return executionTrace;
     }
 
+    /**
+     * Add all the object field variables in all the classes
+     *
+     * @param cu ignore
+     */
     public void addObjectFields(CompilationUnit cu) {
         new VoidVisitorAdapter<Void>() {
             @Override
@@ -58,8 +62,6 @@ public class DataDependence {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
-                String className = m.resolve().getClassName();
-                String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
                 new VoidVisitorAdapter<Void>() {
                     /** Record the method name if an object field variable is assigned in this method
                      * @param a ignore
@@ -68,18 +70,22 @@ public class DataDependence {
                     @Override
                     public void visit(AssignExpr a, Void arg) {
                         String key;
+                        String value = a.getValue().toString();
+                        // An object field list variable is assigned (e.g. a[i] = 1)
                         if (a.getTarget().isArrayAccessExpr()) {
                             key = a.getTarget().asArrayAccessExpr().getName().toString();
-                            appendDependence(key, ASSIGN_KEY, methodName);
-                        } else if (a.getTarget().isFieldAccessExpr()) {
+                            appendValidDependence(key, ASSIGN_KEY, m);
+                        }
+                        // An object field variable is assigned (e.g. a = 1)
+                        else if (a.getTarget().isFieldAccessExpr()) {
                             key = a.getTarget().asFieldAccessExpr().getNameAsString();
-                            appendDependence(key, ASSIGN_KEY, methodName);
+                            appendValidDependence(key, ASSIGN_KEY, m);
+                        }
+                        // if a local variable is assigned by an object field variable
+                        else if (dependence.has(value)) {
+                            appendValidDependence(value, ACCESS_KEY, m);
                         } else {
-                            // if a local variable is assigned by an object field variable
-                            String value = a.getValue().toString();
-                            if (dependence.has(value) && dependence.getJSONObject(value).get(CLASS_KEY).toString().equals(className)) {
-                                appendDependence(value, ACCESS_KEY, methodName);
-                            }
+                            System.out.println("Ignored Field Assign Expression: " + a);
                         }
                     }
 
@@ -91,7 +97,7 @@ public class DataDependence {
                     @Override
                     public void visit(UnaryExpr u, Void arg) {
                         String key = u.getExpression().toString();
-                        appendDependence(key, ASSIGN_KEY, methodName);
+                        appendValidDependence(key, ASSIGN_KEY, m);
                     }
 
                     /**
@@ -103,16 +109,11 @@ public class DataDependence {
                     public void visit(FieldAccessExpr f, Void arg) {
                         String key = f.getScope().toString();
                         if (dependence.has(key)) {
-                            // If the scope of a Field Access Expression is identified object field variable
-                            if (dependence.getJSONObject(key).get(CLASS_KEY).toString().equals(m.resolve().getClassName())) {
-                                appendDependence(key, ACCESS_KEY, methodName);
-                            }
-                        } else if (dependence.has(f.getNameAsString())) {
+                            appendValidDependence(key, ACCESS_KEY, m);
+                        }
+                        else if (f.getScope().isThisExpr()) {
                             key = f.getNameAsString();
-                            // If is This Expression (e.g. int a = this.age;)
-                            if (f.getScope().isThisExpr()) {
-                                appendDependence(key, ASSIGN_KEY, methodName);
-                            }
+                            appendValidDependence(key, ACCESS_KEY, m);
                         } else {
                             System.out.println("Ignored Field Access Expression: " + f);
                         }
@@ -127,16 +128,21 @@ public class DataDependence {
                         for (VariableDeclarator variable : v.getVariables()) {
                             if (variable.getInitializer().isPresent()) {
                                 String value = variable.getInitializer().get().toString();
-
-                                if (dependence.has(value)) {
-                                    if (dependence.getJSONObject(value).get(CLASS_KEY).toString().equals(m.resolve().getClassName())) {
-                                        appendDependence(value, ASSIGN_KEY, methodName);
-                                    }
-                                }
+                                appendValidDependence(value, ASSIGN_KEY, m);
                             }
                         }
                     }
 
+                    /**If one of the arguments of a method call is an object field variable, add the method as the assign method of the variable.
+                     * @param c ignore
+                     * @param arg ignore
+                     */
+                    public void visit(MethodCallExpr c, Void arg) {
+                        for (Expression argument : c.getArguments()) {
+                            String key = argument.toString();
+                            appendValidDependence(key, ACCESS_KEY, m);
+                        }
+                    }
                 }.visit(m, null);
             }
         }.visit(cu, null);
@@ -147,6 +153,21 @@ public class DataDependence {
             JSONObject tmp = dependence.getJSONObject(dependenceKey);
             tmp.append(appendKey, appendValue);
             dependence.put(dependenceKey, tmp);
+        }
+    }
+
+    /**
+     * Only add the dependence if the variable is already identified and has the correct class
+     *
+     * @param variableKey the name of the variable
+     * @param keyType     the type(assign or access) of the method to the variable
+     * @param m           method declaration object
+     */
+    public void appendValidDependence(String variableKey, String keyType, MethodDeclaration m) {
+        String className = m.resolve().getClassName();
+        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
+        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
+            appendDependence(variableKey, keyType, methodName);
         }
     }
 
