@@ -71,15 +71,27 @@ public class DataDependence {
                     public void visit(AssignExpr a, Void arg) {
                         String key;
                         String value = a.getValue().toString();
-                        // An object field list variable is assigned (e.g. a[i] = 1)
                         if (a.getTarget().isArrayAccessExpr()) {
-                            key = a.getTarget().asArrayAccessExpr().getName().toString();
+                            // If the assign target is a list array type object field variable
+                            ArrayAccessExpr arrayAccessExpr = a.getTarget().asArrayAccessExpr();
+                            key = arrayAccessExpr.getName().toString();
                             appendValidDependence(key, ASSIGN_KEY, m);
+                            // If the index of the assign target is an object field variable
+                            String index = arrayAccessExpr.getIndex().toString();
+                            appendValidDependence(index, ACCESS_KEY, m);
                         }
                         // An object field variable is assigned (e.g. a = 1)
                         else if (a.getTarget().isFieldAccessExpr()) {
                             key = a.getTarget().asFieldAccessExpr().getNameAsString();
                             appendValidDependence(key, ASSIGN_KEY, m);
+                        } else if (a.getValue().isArrayAccessExpr()) {
+                            // If the assign value is a list array type object field variable
+                            ArrayAccessExpr arrayAccessExpr = a.getValue().asArrayAccessExpr();
+                            key = arrayAccessExpr.getName().toString();
+                            appendValidDependence(key, ACCESS_KEY, m);
+                            // If the index of the assign value is an object field variable
+                            String index = arrayAccessExpr.getIndex().toString();
+                            appendValidDependence(index, ACCESS_KEY, m);
                         }
                         // if a local variable is assigned by an object field variable
                         else if (dependence.has(value)) {
@@ -110,8 +122,7 @@ public class DataDependence {
                         String key = f.getScope().toString();
                         if (dependence.has(key)) {
                             appendValidDependence(key, ACCESS_KEY, m);
-                        }
-                        else if (f.getScope().isThisExpr()) {
+                        } else if (f.getScope().isThisExpr()) {
                             key = f.getNameAsString();
                             appendValidDependence(key, ACCESS_KEY, m);
                         } else {
