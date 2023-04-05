@@ -1,12 +1,11 @@
 package org.example;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -19,6 +18,8 @@ import java.util.Scanner;
 public class DataDependence {
 
     public static JSONObject dependence = new JSONObject();
+    public static JSONObject constructors = new JSONObject();
+
     public static String CLASS_KEY = "class";
     // When an object field variable is assigned/updated
     public static String ASSIGN_KEY = "assign";
@@ -41,7 +42,7 @@ public class DataDependence {
     }
 
     /**
-     * Add all the object field variables in all the classes
+     * Record all the object field variables in all the classes
      *
      * @param cu ignore
      */
@@ -58,12 +59,46 @@ public class DataDependence {
         }.visit(cu, null);
     }
 
+    /**
+     * Record all the object constructors and the types of their parameters
+     * Only covers the constructors that have parameters
+     *
+     * @param cu ignore
+     */
+    public void addConstructorParameters(CompilationUnit cu) {
+        new VoidVisitorAdapter<Void>() {
+            @Override
+            public void visit(ConstructorDeclaration con, Void arg) {
+                boolean[] validFlag = {true};
+                JSONArray arrayName = new JSONArray();
+                JSONArray arrayType = new JSONArray();
+                for (Parameter parameter : con.getParameters()) {
+                    arrayType.put(parameter.getType().toString());
+                    arrayName.put(parameter.getName().toString());
+                }
+                new VoidVisitorAdapter<Void>() {
+                    @Override
+                    public void visit(AssignExpr a, Void arg) {
+                        if (!arrayName.toList().contains(a.getValue().toString()) && !a.getTarget().isFieldAccessExpr()) {
+                            validFlag[0] = false;
+                        }
+                    }
+                }.visit(con, null);
+                if (validFlag[0] && arrayType.length() != 0) {
+                    constructors.append(con.getNameAsString(), arrayType);
+                }
+            }
+        }.visit(cu, null);
+    }
+
     public void addDataDependence(CompilationUnit cu) {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
                 new VoidVisitorAdapter<Void>() {
-                    /** Record the method name if an object field variable is assigned in this method
+                    /**
+                     * Record the method name if an object field variable is assigned in this method
+                     *
                      * @param a ignore
                      * @param arg ignore
                      */
@@ -101,8 +136,10 @@ public class DataDependence {
                         }
                     }
 
-                    /** Record the method name if an object field is increased or decreased
+                    /**
+                     * Record the method name if an object field is increased or decreased
                      *  e.g. nRecipes++;
+                     *
                      * @param u ignore
                      * @param arg ignore
                      */
@@ -130,7 +167,8 @@ public class DataDependence {
                         }
                     }
 
-                    /**Check if the value assigned to a local variable when it's declared is an object field variable
+                    /**
+                     * Check if the value assigned to a local variable when it's declared is an object field variable
                      *
                      * @param v ignore
                      * @param arg ignore
@@ -138,13 +176,22 @@ public class DataDependence {
                     public void visit(VariableDeclarationExpr v, Void arg) {
                         for (VariableDeclarator variable : v.getVariables()) {
                             if (variable.getInitializer().isPresent()) {
-                                String value = variable.getInitializer().get().toString();
+                                Expression initializer = variable.getInitializer().get();
+                                String value = initializer.toString();
                                 appendValidDependence(value, ASSIGN_KEY, m);
+//                                if (initializer.isObjectCreationExpr()) {
+//                                    for (Expression argument: initializer.asObjectCreationExpr().getArguments()) {
+//                                        System.out.println(argument.calculateResolvedType().describe());
+//                                    }
+//                                    System.out.println();
+//                                }
                             }
                         }
                     }
 
-                    /**If one of the arguments of a method call is an object field variable, add the method as the assign method of the variable.
+                    /**
+                     * If one of the arguments of a method call is an object field variable, add the method as the assign method of the variable.
+                     *
                      * @param c ignore
                      * @param arg ignore
                      */

@@ -55,6 +55,7 @@ public class App {
         for (File file : files) {
             cu = StaticJavaParser.parse(file);
             dataDependence.addObjectFields(cu);
+            dataDependence.addConstructorParameters(cu);
         }
         System.out.println(dataDependence.getDependence());
         // Construct call graph and data dependency graph
@@ -67,7 +68,6 @@ public class App {
         dataDependence.buildGraph(graph);
         System.out.println(dataDependence.getDependence());
     }
-
 
 
     /**
