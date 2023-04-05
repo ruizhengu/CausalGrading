@@ -1,13 +1,13 @@
 package org.example;
 
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -116,5 +116,13 @@ public class Util {
             output.append(".").append(splits[splits.length - length + i]);
         }
         return output.toString();
+    }
+
+    public static boolean matchArguments(NodeList<Expression> arguments, JSONObject constructorParameters) {
+        List<String> argumentTypes = new ArrayList<>();
+        for (Expression argument: arguments) {
+            argumentTypes.add(Util.getLastSegment(argument.calculateResolvedType().describe()));
+        }
+        return argumentTypes.equals(constructorParameters.getJSONArray(DataDependence.PARAMETER_TYPE_KEY).toList());
     }
 }

@@ -25,6 +25,8 @@ public class DataDependence {
     public static String ASSIGN_KEY = "assign";
     // When an object field variable is accessed/used
     public static String ACCESS_KEY = "access";
+    public static String PARAMETER_TYPE_KEY = "type";
+    public static String PARAMETER_FIELD_KEY = "field";
 
     public static List<String> getTrace() throws FileNotFoundException {
         File log = new File("/home/ruizhen/Projects/CausalGrading/src/main/java/org/example/aspect/log.txt");
@@ -54,6 +56,7 @@ public class DataDependence {
                     JSONObject tmp = new JSONObject();
                     tmp.put(CLASS_KEY, c.getName());
                     dependence.put(field.getName(), tmp);
+                    System.out.println(c.getName() + " " + field.getName());
                 }
             }
         }.visit(cu, null);
@@ -69,23 +72,27 @@ public class DataDependence {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(ConstructorDeclaration con, Void arg) {
-                boolean[] validFlag = {true};
                 JSONArray arrayName = new JSONArray();
                 JSONArray arrayType = new JSONArray();
                 for (Parameter parameter : con.getParameters()) {
                     arrayType.put(parameter.getType().toString());
                     arrayName.put(parameter.getName().toString());
                 }
-                new VoidVisitorAdapter<Void>() {
-                    @Override
-                    public void visit(AssignExpr a, Void arg) {
-                        if (!arrayName.toList().contains(a.getValue().toString()) && !a.getTarget().isFieldAccessExpr()) {
-                            validFlag[0] = false;
-                        }
-                    }
-                }.visit(con, null);
-                if (validFlag[0] && arrayType.length() != 0) {
-                    constructors.append(con.getNameAsString(), arrayType);
+                // Ignoring checking if all the parameters of a constructor are used to update object field variables
+
+//                new VoidVisitorAdapter<Void>() {
+//                    @Override
+//                    public void visit(AssignExpr a, Void arg) {
+//                        if (!arrayName.toList().contains(a.getValue().toString()) && !a.getTarget().isFieldAccessExpr()) {
+//                            validFlag[0] = false;
+//                        }
+//                    }
+//                }.visit(con, null);
+                if (arrayType.length() != 0) {
+                    JSONObject parameter = new JSONObject();
+                    parameter.put(PARAMETER_TYPE_KEY, arrayType);
+                    parameter.put(PARAMETER_FIELD_KEY, arrayName);
+                    constructors.append(con.getNameAsString(), parameter);
                 }
             }
         }.visit(cu, null);
@@ -104,7 +111,7 @@ public class DataDependence {
                      */
                     @Override
                     public void visit(AssignExpr a, Void arg) {
-                        String key;
+                        String key = a.getTarget().toString();
                         String value = a.getValue().toString();
                         if (a.getTarget().isArrayAccessExpr()) {
                             // If the assign target is a list array type object field variable
@@ -131,6 +138,8 @@ public class DataDependence {
                         // if a local variable is assigned by an object field variable
                         else if (dependence.has(value)) {
                             appendValidDependence(value, ACCESS_KEY, m);
+                        } else if (dependence.has(key)) {
+                            appendValidDependence(key, ACCESS_KEY, m);
                         } else {
                             System.out.println("Ignored Field Assign Expression: " + a);
                         }
@@ -179,12 +188,18 @@ public class DataDependence {
                                 Expression initializer = variable.getInitializer().get();
                                 String value = initializer.toString();
                                 appendValidDependence(value, ASSIGN_KEY, m);
-//                                if (initializer.isObjectCreationExpr()) {
-//                                    for (Expression argument: initializer.asObjectCreationExpr().getArguments()) {
-//                                        System.out.println(argument.calculateResolvedType().describe());
-//                                    }
-//                                    System.out.println();
-//                                }
+                                if (initializer.isObjectCreationExpr()) {
+                                    String objectClass = initializer.asObjectCreationExpr().getType().toString();
+                                    if (constructors.has(objectClass)) {
+                                        for (Object constructor : constructors.getJSONArray(objectClass)) {
+                                            if (Util.matchArguments(initializer.asObjectCreationExpr().getArguments(), (JSONObject) constructor)) {
+                                                for (Object key : ((JSONObject) constructor).getJSONArray(PARAMETER_FIELD_KEY)) {
+                                                    appendValidDependence(key.toString(), ASSIGN_KEY, objectClass, m);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -223,6 +238,14 @@ public class DataDependence {
      */
     public void appendValidDependence(String variableKey, String keyType, MethodDeclaration m) {
         String className = m.resolve().getClassName();
+        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
+        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
+            appendDependence(variableKey, keyType, methodName);
+        }
+    }
+
+    public void appendValidDependence(String variableKey, String keyType, String className, MethodDeclaration m) {
+//        String className = m.resolve().getClassName();
         String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
         if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
             appendDependence(variableKey, keyType, methodName);
