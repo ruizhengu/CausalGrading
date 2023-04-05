@@ -20,7 +20,7 @@ public class DataDependence {
     public static JSONObject dependence = new JSONObject();
     public static JSONObject constructors = new JSONObject();
 
-    public static String CLASS_KEY = "class";
+    public static String FIELD_KEY = "field";
     // When an object field variable is assigned/updated
     public static String ASSIGN_KEY = "assign";
     // When an object field variable is accessed/used
@@ -54,9 +54,9 @@ public class DataDependence {
             public void visit(ClassOrInterfaceDeclaration c, Void arg) {
                 for (ResolvedFieldDeclaration field : c.resolve().getAllFields()) {
                     JSONObject tmp = new JSONObject();
-                    tmp.put(CLASS_KEY, c.getName());
-                    dependence.put(field.getName(), tmp);
-                    System.out.println(c.getName() + " " + field.getName());
+                    tmp.put(FIELD_KEY, field.getName());
+                    dependence.append(c.getNameAsString(), tmp);
+//                    System.out.println(c.getName() + " " + field.getName());
                 }
             }
         }.visit(cu, null);
@@ -194,7 +194,7 @@ public class DataDependence {
                                         for (Object constructor : constructors.getJSONArray(objectClass)) {
                                             if (Util.matchArguments(initializer.asObjectCreationExpr().getArguments(), (JSONObject) constructor)) {
                                                 for (Object key : ((JSONObject) constructor).getJSONArray(PARAMETER_FIELD_KEY)) {
-                                                    appendValidDependence(key.toString(), ASSIGN_KEY, objectClass, m);
+//                                                    appendValidDependence(key.toString(), ASSIGN_KEY, objectClass, m);
                                                 }
                                             }
                                         }
@@ -239,18 +239,30 @@ public class DataDependence {
     public void appendValidDependence(String variableKey, String keyType, MethodDeclaration m) {
         String className = m.resolve().getClassName();
         String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
-        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
-            appendDependence(variableKey, keyType, methodName);
+        if (dependence.has(className)) {
+            JSONArray dependency = dependence.getJSONArray(className);
+            for (int i = 0; i < dependency.length(); i++) {
+                if (dependency.getJSONObject(i).get(FIELD_KEY).equals(variableKey)) {
+                    JSONObject tmp = dependency.getJSONObject(i);
+                    tmp.append(keyType, methodName);
+                    break;
+                }
+
+            }
         }
+//
+//        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(FIELD_KEY).toString().equals(className)) {
+//            appendDependence(variableKey, keyType, methodName);
+//        }
     }
 
-    public void appendValidDependence(String variableKey, String keyType, String className, MethodDeclaration m) {
-//        String className = m.resolve().getClassName();
-        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
-        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
-            appendDependence(variableKey, keyType, methodName);
-        }
-    }
+//    public void appendValidDependence(String variableKey, String keyType, String className, MethodDeclaration m) {
+////        String className = m.resolve().getClassName();
+//        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
+//        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
+//            appendDependence(variableKey, keyType, methodName);
+//        }
+//    }
 
     /**
      * Connect the method nodes with data dependence
@@ -258,6 +270,7 @@ public class DataDependence {
      * @param graph The Digraph object
      */
     public void buildGraph(Digraph graph) throws FileNotFoundException {
+        System.out.println(dependence);
         List<String> trace = getTrace();
         Iterator<String> keys = dependence.keys();
 
