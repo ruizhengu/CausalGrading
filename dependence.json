@@ -1,0 +1,355 @@
+{
+  "Water": [
+    {
+      "field": "name"
+    },
+    {
+      "field": "unit"
+    },
+    {
+      "field": "amount"
+    }
+  ],
+  "App": [
+    {
+      "access": [
+        "App.main"
+      ],
+      "field": "cc"
+    }
+  ],
+  "Order": [
+    {
+      "field": "recipeOrdered"
+    },
+    {
+      "access": [
+        "Order.printReceipt"
+      ],
+      "field": "customerName"
+    },
+    {
+      "field": "amountPaid"
+    },
+    {
+      "field": "specialRequest"
+    },
+    {
+      "field": "orderPlaced"
+    },
+    {
+      "field": "orderServed",
+      "assign": [
+        "Order.serve"
+      ]
+    }
+  ],
+  "RecipeNotFoundException": [
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "backtrace"
+    },
+    {
+      "field": "detailMessage"
+    },
+    {
+      "field": "UNASSIGNED_STACK"
+    },
+    {
+      "field": "cause"
+    },
+    {
+      "field": "stackTrace"
+    },
+    {
+      "field": "depth"
+    },
+    {
+      "field": "SUPPRESSED_SENTINEL"
+    },
+    {
+      "field": "suppressedExceptions"
+    },
+    {
+      "field": "NULL_CAUSE_MESSAGE"
+    },
+    {
+      "field": "SELF_SUPPRESSION_MESSAGE"
+    },
+    {
+      "field": "CAUSE_CAPTION"
+    },
+    {
+      "field": "SUPPRESSED_CAPTION"
+    },
+    {
+      "field": "EMPTY_THROWABLE_ARRAY"
+    },
+    {
+      "field": "$assertionsDisabled"
+    }
+  ],
+  "Cafe": [
+    {
+      "field": "name",
+      "assign": [
+        "App.main"
+      ]
+    },
+    {
+      "access": [
+        "Cafe.addRecipe",
+        "Cafe.removeRecipe",
+        "Cafe.getMenu",
+        "Cafe.findRecipe"
+      ],
+      "field": "menu",
+      "assign": [
+        "Cafe.addRecipe",
+        "Cafe.removeRecipe"
+      ]
+    },
+    {
+      "access": [
+        "Cafe.printPendingOrders",
+        "Cafe.placeOrder",
+        "Cafe.serveOrder"
+      ],
+      "field": "orders",
+      "assign": [
+        "Cafe.placeOrder"
+      ]
+    },
+    {
+      "access": [
+        "Cafe.placeOrder"
+      ],
+      "field": "indexNextOrderToPlace",
+      "assign": [
+        "Cafe.placeOrder"
+      ]
+    },
+    {
+      "field": "indexNextOrderToServe",
+      "assign": [
+        "Cafe.printPendingOrders",
+        "Cafe.serveOrder"
+      ]
+    },
+    {
+      "access": [
+        "Cafe.printPendingOrders",
+        "Cafe.serveOrder"
+      ],
+      "field": "nRecipes",
+      "assign": [
+        "Cafe.addRecipe",
+        "Cafe.removeRecipe"
+      ]
+    }
+  ],
+  "CafeOutOfCapacityException": [
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "backtrace"
+    },
+    {
+      "field": "detailMessage"
+    },
+    {
+      "field": "UNASSIGNED_STACK"
+    },
+    {
+      "field": "cause"
+    },
+    {
+      "field": "stackTrace"
+    },
+    {
+      "field": "depth"
+    },
+    {
+      "field": "SUPPRESSED_SENTINEL"
+    },
+    {
+      "field": "suppressedExceptions"
+    },
+    {
+      "field": "NULL_CAUSE_MESSAGE"
+    },
+    {
+      "field": "SELF_SUPPRESSION_MESSAGE"
+    },
+    {
+      "field": "CAUSE_CAPTION"
+    },
+    {
+      "field": "SUPPRESSED_CAPTION"
+    },
+    {
+      "field": "EMPTY_THROWABLE_ARRAY"
+    },
+    {
+      "field": "$assertionsDisabled"
+    }
+  ],
+  "Ingredient": [
+    {
+      "access": [
+        "Ingredient.getName"
+      ],
+      "field": "name"
+    },
+    {
+      "access": [
+        "Ingredient.getUnit"
+      ],
+      "field": "unit"
+    },
+    {
+      "access": [
+        "Ingredient.getAmount"
+      ],
+      "field": "amount"
+    }
+  ],
+  "Recipe": [
+    {
+      "field": "name",
+      "assign": [
+        "App.main",
+        "App.main"
+      ]
+    },
+    {
+      "access": [
+        "Recipe.getPrice"
+      ],
+      "field": "price",
+      "assign": [
+        "App.main",
+        "App.main"
+      ]
+    },
+    {
+      "field": "size",
+      "assign": [
+        "App.main",
+        "App.main"
+      ]
+    },
+    {
+      "access": [
+        "Recipe.addIngredient",
+        "Recipe.addIngredient"
+      ],
+      "field": "ingredients",
+      "assign": [
+        "Recipe.addIngredient",
+        "Recipe.addIngredient"
+      ]
+    }
+  ],
+  "Coffee": [
+    {
+      "field": "decaf"
+    },
+    {
+      "field": "name"
+    },
+    {
+      "field": "unit"
+    },
+    {
+      "field": "amount"
+    }
+  ],
+  "Syrup": [
+    {
+      "field": "flavour"
+    },
+    {
+      "field": "name"
+    },
+    {
+      "field": "unit"
+    },
+    {
+      "field": "amount"
+    }
+  ],
+  "TooManyIngredientsException": [
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "serialVersionUID"
+    },
+    {
+      "field": "backtrace"
+    },
+    {
+      "field": "detailMessage"
+    },
+    {
+      "field": "UNASSIGNED_STACK"
+    },
+    {
+      "field": "cause"
+    },
+    {
+      "field": "stackTrace"
+    },
+    {
+      "field": "depth"
+    },
+    {
+      "field": "SUPPRESSED_SENTINEL"
+    },
+    {
+      "field": "suppressedExceptions"
+    },
+    {
+      "field": "NULL_CAUSE_MESSAGE"
+    },
+    {
+      "field": "SELF_SUPPRESSION_MESSAGE"
+    },
+    {
+      "field": "CAUSE_CAPTION"
+    },
+    {
+      "field": "SUPPRESSED_CAPTION"
+    },
+    {
+      "field": "EMPTY_THROWABLE_ARRAY"
+    },
+    {
+      "field": "$assertionsDisabled"
+    }
+  ],
+  "Milk": [
+    {
+      "field": "type"
+    },
+    {
+      "field": "name"
+    },
+    {
+      "field": "unit"
+    },
+    {
+      "field": "amount"
+    }
+  ]
+}

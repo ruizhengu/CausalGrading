@@ -10,6 +10,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -277,7 +279,7 @@ public class DataDependence {
      *
      * @param graph The Digraph object
      */
-    public void buildGraph(Digraph graph) throws FileNotFoundException {
+    public void buildGraph(Digraph graph) throws IOException {
         List<String> trace = getTrace();
         Iterator<String> keys = dependence.keys();
 
@@ -301,9 +303,12 @@ public class DataDependence {
                 }
             }
         }
+        writeFile();
     }
 
-    public JSONObject getDependence() {
-        return dependence;
+    public void writeFile() throws IOException {
+        FileWriter writer = new FileWriter("dependence.json");
+        writer.write(dependence.toString());
+        writer.close();
     }
 }
