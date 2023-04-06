@@ -56,7 +56,6 @@ public class DataDependence {
                     JSONObject tmp = new JSONObject();
                     tmp.put(FIELD_KEY, field.getName());
                     dependence.append(c.getNameAsString(), tmp);
-//                    System.out.println(c.getName() + " " + field.getName());
                 }
             }
         }.visit(cu, null);
@@ -102,6 +101,7 @@ public class DataDependence {
         new VoidVisitorAdapter<Void>() {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
+                String className = m.resolve().getClassName();
                 new VoidVisitorAdapter<Void>() {
                     /**
                      * Record the method name if an object field variable is assigned in this method
@@ -117,29 +117,29 @@ public class DataDependence {
                             // If the assign target is a list array type object field variable
                             ArrayAccessExpr arrayAccessExpr = a.getTarget().asArrayAccessExpr();
                             key = arrayAccessExpr.getName().toString();
-                            appendValidDependence(key, ASSIGN_KEY, m);
+                            appendDependence(key, ASSIGN_KEY, m);
                             // If the index of the assign target is an object field variable
                             String index = arrayAccessExpr.getIndex().toString();
-                            appendValidDependence(index, ACCESS_KEY, m);
+                            appendDependence(index, ACCESS_KEY, m);
                         }
                         // An object field variable is assigned (e.g. a = 1)
                         else if (a.getTarget().isFieldAccessExpr()) {
                             key = a.getTarget().asFieldAccessExpr().getNameAsString();
-                            appendValidDependence(key, ASSIGN_KEY, m);
+                            appendDependence(key, ASSIGN_KEY, m);
                         } else if (a.getValue().isArrayAccessExpr()) {
                             // If the assign value is a list array type object field variable
                             ArrayAccessExpr arrayAccessExpr = a.getValue().asArrayAccessExpr();
                             key = arrayAccessExpr.getName().toString();
-                            appendValidDependence(key, ACCESS_KEY, m);
+                            appendDependence(key, ACCESS_KEY, m);
                             // If the index of the assign value is an object field variable
                             String index = arrayAccessExpr.getIndex().toString();
-                            appendValidDependence(index, ACCESS_KEY, m);
+                            appendDependence(index, ACCESS_KEY, m);
                         }
                         // if a local variable is assigned by an object field variable
-                        else if (dependence.has(value)) {
-                            appendValidDependence(value, ACCESS_KEY, m);
-                        } else if (dependence.has(key)) {
-                            appendValidDependence(key, ACCESS_KEY, m);
+                        else if (dependenceHasValue(className, value)) {
+                            appendDependence(value, ACCESS_KEY, m);
+                        } else if (dependenceHasValue(className, key)) {
+                            appendDependence(key, ACCESS_KEY, m);
                         } else {
                             System.out.println("Ignored Field Assign Expression: " + a);
                         }
@@ -155,7 +155,7 @@ public class DataDependence {
                     @Override
                     public void visit(UnaryExpr u, Void arg) {
                         String key = u.getExpression().toString();
-                        appendValidDependence(key, ASSIGN_KEY, m);
+                        appendDependence(key, ASSIGN_KEY, m);
                     }
 
                     /**
@@ -166,11 +166,11 @@ public class DataDependence {
                     @Override
                     public void visit(FieldAccessExpr f, Void arg) {
                         String key = f.getScope().toString();
-                        if (dependence.has(key)) {
-                            appendValidDependence(key, ACCESS_KEY, m);
+                        if (dependenceHasValue(className, key)) {
+                            appendDependence(key, ACCESS_KEY, m);
                         } else if (f.getScope().isThisExpr()) {
                             key = f.getNameAsString();
-                            appendValidDependence(key, ACCESS_KEY, m);
+                            appendDependence(key, ACCESS_KEY, m);
                         } else {
                             System.out.println("Ignored Field Access Expression: " + f);
                         }
@@ -187,14 +187,14 @@ public class DataDependence {
                             if (variable.getInitializer().isPresent()) {
                                 Expression initializer = variable.getInitializer().get();
                                 String value = initializer.toString();
-                                appendValidDependence(value, ASSIGN_KEY, m);
+                                appendDependence(value, ASSIGN_KEY, m);
                                 if (initializer.isObjectCreationExpr()) {
                                     String objectClass = initializer.asObjectCreationExpr().getType().toString();
                                     if (constructors.has(objectClass)) {
                                         for (Object constructor : constructors.getJSONArray(objectClass)) {
                                             if (Util.matchArguments(initializer.asObjectCreationExpr().getArguments(), (JSONObject) constructor)) {
                                                 for (Object key : ((JSONObject) constructor).getJSONArray(PARAMETER_FIELD_KEY)) {
-//                                                    appendValidDependence(key.toString(), ASSIGN_KEY, objectClass, m);
+                                                    appendDependence(key.toString(), ASSIGN_KEY, objectClass, m);
                                                 }
                                             }
                                         }
@@ -213,20 +213,12 @@ public class DataDependence {
                     public void visit(MethodCallExpr c, Void arg) {
                         for (Expression argument : c.getArguments()) {
                             String key = argument.toString();
-                            appendValidDependence(key, ACCESS_KEY, m);
+                            appendDependence(key, ACCESS_KEY, m);
                         }
                     }
                 }.visit(m, null);
             }
         }.visit(cu, null);
-    }
-
-    public void appendDependence(String dependenceKey, String appendKey, String appendValue) {
-        if (dependence.has(dependenceKey)) {
-            JSONObject tmp = dependence.getJSONObject(dependenceKey);
-            tmp.append(appendKey, appendValue);
-            dependence.put(dependenceKey, tmp);
-        }
     }
 
     /**
@@ -236,7 +228,7 @@ public class DataDependence {
      * @param keyType     the type(assign or access) of the method to the variable
      * @param m           method declaration object
      */
-    public void appendValidDependence(String variableKey, String keyType, MethodDeclaration m) {
+    public void appendDependence(String variableKey, String keyType, MethodDeclaration m) {
         String className = m.resolve().getClassName();
         String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
         if (dependence.has(className)) {
@@ -245,24 +237,40 @@ public class DataDependence {
                 if (dependency.getJSONObject(i).get(FIELD_KEY).equals(variableKey)) {
                     JSONObject tmp = dependency.getJSONObject(i);
                     tmp.append(keyType, methodName);
-                    break;
+                    dependency.put(i, tmp);
                 }
-
             }
+            dependence.remove(className);
+            dependence.put(className, dependency);
         }
-//
-//        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(FIELD_KEY).toString().equals(className)) {
-//            appendDependence(variableKey, keyType, methodName);
-//        }
     }
 
-//    public void appendValidDependence(String variableKey, String keyType, String className, MethodDeclaration m) {
-////        String className = m.resolve().getClassName();
-//        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
-//        if (dependence.has(variableKey) && dependence.getJSONObject(variableKey).get(CLASS_KEY).toString().equals(className)) {
-//            appendDependence(variableKey, keyType, methodName);
-//        }
-//    }
+    public void appendDependence(String variableKey, String keyType, String variableClass, MethodDeclaration m) {
+        if (dependence.has(variableClass)) {
+            JSONArray dependency = dependence.getJSONArray(variableClass);
+            for (int i = 0; i < dependency.length(); i++) {
+                if (dependency.getJSONObject(i).get(FIELD_KEY).equals(variableKey)) {
+                    JSONObject tmp = dependency.getJSONObject(i);
+                    tmp.append(keyType, String.join(".", m.resolve().getClassName(), m.getNameAsString()));
+                    dependency.put(i, tmp);
+                }
+            }
+            dependence.remove(variableClass);
+            dependence.put(variableClass, dependency);
+        }
+    }
+
+    public boolean dependenceHasValue(String className, String value) {
+        if (dependence.has(className)) {
+            JSONArray dependency = dependence.getJSONArray(className);
+            for (int i = 0; i < dependency.length(); i++) {
+                if (dependency.getJSONObject(i).get(FIELD_KEY).equals(value)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Connect the method nodes with data dependence
@@ -270,20 +278,24 @@ public class DataDependence {
      * @param graph The Digraph object
      */
     public void buildGraph(Digraph graph) throws FileNotFoundException {
-        System.out.println(dependence);
         List<String> trace = getTrace();
         Iterator<String> keys = dependence.keys();
 
         while (keys.hasNext()) {
             String key = keys.next();
-            JSONObject tmp = dependence.getJSONObject(key);
-            if (tmp.has(ASSIGN_KEY) && tmp.has(ACCESS_KEY)) {
-                for (Object methodAssign : tmp.getJSONArray(ASSIGN_KEY)) {
-                    int indexAssign = trace.indexOf(methodAssign.toString());
-                    for (Object methodAccess : tmp.getJSONArray(ACCESS_KEY)) {
-                        int indexAccess = trace.indexOf(methodAccess.toString());
-                        if (indexAssign > -1 && indexAccess > -1 && indexAccess > indexAssign) {
-                            graph.addNodeAndEdge(methodAssign.toString(), methodAccess.toString(), Digraph.STYLE_DATA);
+            JSONArray tmp = dependence.getJSONArray(key);
+            for (int i = 0; i < tmp.length(); i++) {
+                JSONObject tmpObj = tmp.getJSONObject(i);
+                if (tmpObj.has(ASSIGN_KEY) && tmpObj.has(ACCESS_KEY)) {
+                    JSONArray assignArray = tmpObj.getJSONArray(ASSIGN_KEY);
+                    JSONArray accessArray = tmpObj.getJSONArray(ACCESS_KEY);
+                    for (Object methodAssign : assignArray) {
+                        int indexAssign = trace.indexOf(methodAssign.toString());
+                        for (Object methodAccess : accessArray) {
+                            int indexAccess = trace.indexOf(methodAccess.toString());
+                            if (indexAssign > -1 && indexAccess > -1 && indexAccess > indexAssign) {
+                                graph.addNodeAndEdge(methodAssign.toString(), methodAccess.toString(), Digraph.STYLE_DATA);
+                            }
                         }
                     }
                 }
