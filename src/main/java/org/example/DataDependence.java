@@ -238,7 +238,13 @@ public class DataDependence {
             for (int i = 0; i < dependency.length(); i++) {
                 if (dependency.getJSONObject(i).get(FIELD_KEY).equals(variableKey)) {
                     JSONObject tmp = dependency.getJSONObject(i);
-                    tmp.append(keyType, methodName);
+                    if (tmp.has(keyType)) {
+                        if (!tmp.getJSONArray(keyType).toList().contains(methodName)) {
+                            tmp.put(keyType, tmp.getJSONArray(keyType).put(methodName));
+                        }
+                    } else {
+                        tmp.append(keyType, methodName);
+                    }
                     dependency.put(i, tmp);
                 }
             }
@@ -248,12 +254,19 @@ public class DataDependence {
     }
 
     public void appendDependence(String variableKey, String keyType, String variableClass, MethodDeclaration m) {
+        String methodName = String.join(".", m.resolve().getClassName(), m.getNameAsString());
         if (dependence.has(variableClass)) {
             JSONArray dependency = dependence.getJSONArray(variableClass);
             for (int i = 0; i < dependency.length(); i++) {
                 if (dependency.getJSONObject(i).get(FIELD_KEY).equals(variableKey)) {
                     JSONObject tmp = dependency.getJSONObject(i);
-                    tmp.append(keyType, String.join(".", m.resolve().getClassName(), m.getNameAsString()));
+                    if (tmp.has(keyType)) {
+                        if (!tmp.getJSONArray(keyType).toList().contains(methodName)) {
+                            tmp.put(keyType, tmp.getJSONArray(keyType).put(methodName));
+                        }
+                    } else {
+                        tmp.append(keyType, methodName);
+                    }
                     dependency.put(i, tmp);
                 }
             }

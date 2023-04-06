@@ -227,7 +227,6 @@
     {
       "field": "name",
       "assign": [
-        "App.main",
         "App.main"
       ]
     },
@@ -237,25 +236,21 @@
       ],
       "field": "price",
       "assign": [
-        "App.main",
         "App.main"
       ]
     },
     {
       "field": "size",
       "assign": [
-        "App.main",
         "App.main"
       ]
     },
     {
       "access": [
-        "Recipe.addIngredient",
         "Recipe.addIngredient"
       ],
       "field": "ingredients",
       "assign": [
-        "Recipe.addIngredient",
         "Recipe.addIngredient"
       ]
     }
