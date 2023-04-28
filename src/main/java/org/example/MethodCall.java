@@ -13,6 +13,7 @@ public class MethodCall {
             @Override
             public void visit(MethodDeclaration m, Void arg) {
                 String callerNode = String.join(".", m.resolve().getClassName(), m.getNameAsString());
+                System.out.println(callerNode);
                 graph.addNodeIfNotExists(callerNode);
                 new VoidVisitorAdapter<Void>() {
                     @Override
@@ -33,5 +34,4 @@ public class MethodCall {
             }
         }.visit(cu, null);
     }
-
 }

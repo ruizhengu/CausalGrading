@@ -1,5 +1,6 @@
 package org.example;
 
+import jdk.jshell.Diag;
 import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
@@ -23,6 +24,12 @@ public class Digraph {
         Node n = new Node(nodeID);
         n.graph = this;
         nodes.add(n);
+        return this;
+    }
+
+    public Digraph removeNode(String nodeID) {
+        Node target = getNode(nodeID);
+        nodes.remove(target);
         return this;
     }
 
@@ -112,18 +119,19 @@ public class Digraph {
                     writer.println("\"" + n.nodeID + "\" [label=\"" + n.nodeName + "\"];");
                 else
                     writer.println("\"" + n.nodeID + "\" [label=\"" + n.nodeID + "\"];");
-            }
-            for (Node n : nodes) {
                 if (n.children.size() > 0) {
                     for (Node c : n.children) {
-                        StringBuilder output = new StringBuilder("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\"");
-                        if (c.hasLabel()) {
-                            output.append("[label=\"").append(c.linkLabel).append("\"]");
+                        // Check if the child node exists in the graph
+                        if (nodeExists(c.nodeID)) {
+                            StringBuilder output = new StringBuilder("\"" + n.nodeID + "\" -> \"" + c.nodeID + "\"");
+                            if (c.hasLabel()) {
+                                output.append("[label=\"").append(c.linkLabel).append("\"]");
+                            }
+                            if (n.hasStyle()) {
+                                output.append("[style=\"").append(n.style).append("\"]");
+                            }
+                            writer.println(output.append(";"));
                         }
-                        if (n.hasStyle()) {
-                            output.append("[style=\"").append(n.style).append("\"]");
-                        }
-                        writer.println(output.append(";"));
                     }
                 }
             }
