@@ -6,7 +6,11 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MethodCall {
+    public static List<String[]> data = new ArrayList<>();
 
     public static void addMethodCalls(CompilationUnit cu, Digraph graph) {
         new VoidVisitorAdapter<Void>() {
@@ -29,9 +33,19 @@ public class MethodCall {
                                 Argument.addArgumentMethodCall(argument, graph, callerNode);
                             }
                         }
+                        String[] callerMethod = {m.resolve().getClassName(), m.getNameAsString()};
+                        String[] calleeMethod = {n.resolve().getClassName(), n.getNameAsString()};
+                        // Write all methods and the class names to a csv file
+                        if (Util.notDuplicatedArray(data, callerMethod)) {
+                            data.add(callerMethod);
+                        }
+                        if (Util.notDuplicatedArray(data, calleeMethod)) {
+                            data.add(calleeMethod);
+                        }
                     }
                 }.visit(m, null);
             }
         }.visit(cu, null);
+        Table.writeMethodCoverage(data);
     }
 }

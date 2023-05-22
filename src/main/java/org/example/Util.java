@@ -3,7 +3,6 @@ package org.example;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -120,9 +119,18 @@ public class Util {
 
     public static boolean matchArguments(NodeList<Expression> arguments, JSONObject constructorParameters) {
         List<String> argumentTypes = new ArrayList<>();
-        for (Expression argument: arguments) {
+        for (Expression argument : arguments) {
             argumentTypes.add(Util.getLastSegment(argument.calculateResolvedType().describe()));
         }
         return argumentTypes.equals(constructorParameters.getJSONArray(DataDependence.PARAMETER_TYPE_KEY).toList());
+    }
+
+    public static boolean notDuplicatedArray(List<String[]> data, String[] targetArray) {
+        for (String[] array : data) {
+            if (Arrays.equals(array, targetArray)) {
+                return false;
+            }
+        }
+        return true;
     }
 }
