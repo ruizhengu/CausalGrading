@@ -1,10 +1,9 @@
 package org.example;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 public class Table {
@@ -22,4 +21,13 @@ public class Table {
         }
     }
 
+    public static List<String[]> readAllData(String file) {
+        try {
+            FileReader fileReader = new FileReader(file);
+            CSVReader csvReader = new CSVReader(fileReader);
+            return csvReader.readAll();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

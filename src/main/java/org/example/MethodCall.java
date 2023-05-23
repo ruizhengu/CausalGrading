@@ -35,9 +35,15 @@ public class MethodCall {
                                 }
                             }
                             // Write all method names to a csv file
-                            String[] tmp = {m.resolve().getQualifiedName()};
-                            data.add(tmp);
-                            System.out.println(m.resolve().getQualifiedName());
+                            String[] declaration = {m.resolve().getQualifiedName()};
+                            String[] callExpression = {n.resolve().getQualifiedName()};
+
+                            if (Util.notDuplicatedArray(data, declaration) && declaration[0].contains(Util.PACKAGE_NAME)) {
+                                data.add(declaration);
+                            }
+                            if (Util.notDuplicatedArray(data, callExpression) && callExpression[0].contains(Util.PACKAGE_NAME)) {
+                                data.add(callExpression);
+                            }
                         }
                     }.visit(m, null);
                 }
