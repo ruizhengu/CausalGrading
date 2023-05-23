@@ -1,15 +1,17 @@
 digraph Cafe {
 "App.main" [label="App.main"];
-"App.main" -> "Recipe.addIngredient"[style="dotted"];
-"App.main" -> "Cafe.addRecipe"[style="dotted"];
-"App.main" -> "Cafe.removeRecipe"[style="dotted"];
-"App.main" -> "Recipe.getName"[style="dotted"];
-"App.main" -> "Cafe.printMenu"[style="dotted"];
-"App.main" -> "Recipe.getPrice"[style="dotted"];
+"App.main" -> "Recipe.addIngredient";
+"App.main" -> "Cafe.addRecipe";
+"App.main" -> "Cafe.removeRecipe";
+"App.main" -> "Recipe.getName";
+"App.main" -> "Cafe.printMenu";
 "Recipe.addIngredient" [label="Recipe.addIngredient"];
 "Recipe.addIngredient" -> "Ingredient.equals";
 "Cafe.addRecipe" [label="Cafe.addRecipe"];
-"Cafe.addRecipe" -> "Cafe.removeRecipe"[style="dotted"];
+"Cafe.addRecipe" -> "Cafe.getMenu"[style="dotted"];
+"Cafe.addRecipe" -> "Cafe.findRecipe"[style="dotted"];
+"Cafe.addRecipe" -> "Cafe.printPendingOrders"[style="dotted"];
+"Cafe.addRecipe" -> "Cafe.serveOrder"[style="dotted"];
 "Cafe.removeRecipe" [label="Cafe.removeRecipe"];
 "Recipe.getName" [label="Recipe.getName"];
 "Cafe.printMenu" [label="Cafe.printMenu"];
@@ -35,8 +37,10 @@ digraph Cafe {
 "Order.toString" [label="Order.toString"];
 "Order.toString" -> "Recipe.getName";
 "Cafe.placeOrder" [label="Cafe.placeOrder"];
-"Cafe.placeOrder" -> "Cafe.findRecipe";
-"Cafe.placeOrder" -> "Recipe.getPrice";
+"Cafe.placeOrder" -> "Cafe.findRecipe"[style="dotted"];
+"Cafe.placeOrder" -> "Recipe.getPrice"[style="dotted"];
+"Cafe.placeOrder" -> "Cafe.printPendingOrders"[style="dotted"];
+"Cafe.placeOrder" -> "Cafe.serveOrder"[style="dotted"];
 "Cafe.findRecipe" [label="Cafe.findRecipe"];
 "Cafe.serveOrder" [label="Cafe.serveOrder"];
 "Cafe.serveOrder" -> "Order.serve";

@@ -1,61 +1,28 @@
 package org.example;
 
-import org.jacoco.core.analysis.Analyzer;
-import org.jacoco.core.analysis.CoverageBuilder;
-import org.jacoco.core.analysis.IClassCoverage;
-import org.jacoco.core.analysis.ICoverageNode;
-import org.jacoco.core.data.ExecutionData;
-import org.jacoco.core.data.ExecutionDataReader;
-import org.jacoco.core.data.ExecutionDataStore;
-import org.jacoco.core.data.SessionInfoStore;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Coverage {
-    public static void main(String[] args) {
-        ExecutionDataReader executionDataReader;
-        {
-            try {
-                executionDataReader = new ExecutionDataReader(new FileInputStream("/home/ruizhen/Projects/Experiment/com1003-problem-sheet-guruizhen/build/jacoco/test.exec"));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            ExecutionDataStore executionDataStore = new ExecutionDataStore();
-            SessionInfoStore sessionInfoStore = new SessionInfoStore();
-            executionDataReader.setExecutionDataVisitor(executionDataStore);
-            executionDataReader.setSessionInfoVisitor(sessionInfoStore);
-            try {
-                executionDataReader.read();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
 
-            CoverageBuilder coverageBuilder = new CoverageBuilder();
-            Analyzer analyzer = new Analyzer(executionDataStore, coverageBuilder);
+    public static String METHOD_COVERAGE_DIRECTORY = "MethodCoverage";
 
-
-//            try {
-//                analyzer.analyzeAll(new File("/home/ruizhen/Projects/Experiment/com1003-problem-sheet-guruizhen/build/classes"));
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            IClassCoverage classCoverage = coverageBuilder.getClasses().stream().findFirst().orElse(null);
-//            if (classCoverage != null) {
-//                List<String> coveredMethods = classCoverage.getMethods().stream().map(ICoverageNode::getName).collect(Collectors.toList());
-//
-//                for (String method : coveredMethods) {
-//                    System.out.println(method);
-//                }
-//            }
-//            for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
-//                List<String> coveredMethods = classCoverage.getMethods().stream().map(ICoverageNode::getName).collect(Collectors.toList());
-//                System.out.println(classCoverage + " " + coveredMethods);
-//            }
+    public void getTrace() {
+        for (String methods : listTestMethods()) {
+            System.out.println(methods);
         }
+    }
+
+    public List<String> listTestMethods() {
+        String currentClass = this.getClass().getSimpleName();
+        return Stream.of(Objects.requireNonNull(new File(METHOD_COVERAGE_DIRECTORY).listFiles())).map(File::getName).filter(name -> !name.contains(currentClass)).collect(Collectors.toList());
+    }
+
+    public static void main(String[] args) {
+        Coverage coverage = new Coverage();
+        coverage.getTrace();
     }
 }

@@ -1,0 +1,2 @@
+uk.ac.sheffield.com1003.cafe.Cafe.greeting
+uk.ac.sheffield.com1003.cafe.Cafe.getName

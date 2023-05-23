@@ -1,0 +1,4 @@
+uk.ac.sheffield.com1003.cafe.Recipe.addIngredient
+uk.ac.sheffield.com1003.cafe.Recipe.addIngredient
+uk.ac.sheffield.com1003.cafe.ingredients.Ingredient.equals
+uk.ac.sheffield.com1003.cafe.ingredients.Ingredient.getName

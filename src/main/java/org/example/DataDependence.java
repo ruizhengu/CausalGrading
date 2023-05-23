@@ -29,9 +29,10 @@ public class DataDependence {
     public static String ACCESS_KEY = "access";
     public static String PARAMETER_TYPE_KEY = "type";
     public static String PARAMETER_FIELD_KEY = "field";
+    public static String EXECUTION_TRACE_PATH = "/home/ruizhen/Projects/Experiment/com1003_cafe/log.txt";
 
     public static List<String> getTrace() throws FileNotFoundException {
-        File log = new File("/home/ruizhen/Projects/CausalGrading/src/main/java/org/example/aspect/log.txt");
+        File log = new File(EXECUTION_TRACE_PATH);
         List<String> executionTrace = new ArrayList<>();
         Scanner scanner = new Scanner(log);
         while (scanner.hasNextLine()) {

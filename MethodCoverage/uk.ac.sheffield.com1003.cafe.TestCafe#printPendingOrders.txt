@@ -1,0 +1,10 @@
+uk.ac.sheffield.com1003.cafe.Recipe.addIngredient
+uk.ac.sheffield.com1003.cafe.Recipe.addIngredient
+uk.ac.sheffield.com1003.cafe.ingredients.Ingredient.equals
+uk.ac.sheffield.com1003.cafe.ingredients.Ingredient.getName
+uk.ac.sheffield.com1003.cafe.Cafe.addRecipe
+uk.ac.sheffield.com1003.cafe.Cafe.placeOrder
+uk.ac.sheffield.com1003.cafe.Cafe.findRecipe
+uk.ac.sheffield.com1003.cafe.Recipe.getName
+uk.ac.sheffield.com1003.cafe.Recipe.getPrice
+uk.ac.sheffield.com1003.cafe.Cafe.printPendingOrders
